@@ -792,19 +792,40 @@ function makeHeadphoneTrackApp(pStart: PP, pEnd: PP, color: string, isInnerRing:
   let cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
 
   if (color === RED) {
-    // Красные: мягкая, плавная и красивая нижняя дуга без излишних уходов
-    const arcY = isInnerRing ? 16 : 10;
-    cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + arcY };
-    cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y + arcY * 0.5 };
+    // Красные: сразу делают шаг ВНИЗ И ВЛЕВО (в сторону центра поля), затем переходят в нижнюю дугу
+    const stepDownY = isInnerRing ? 18 : 12;
+    const stepLeftX = isRight ? -18 : 18;
+    cp1 = {
+      x: pStart.x + stepLeftX,
+      y: pStart.y + stepDownY
+    };
+    cp2 = {
+      x: pEnd.x + (isRight ? -8 : 8),
+      y: pEnd.y + stepDownY * 0.35
+    };
   } else if (color === GREEN) {
     // Зеленые: мягкая, плавная и красивая верхняя дуга
     const arcY = isInnerRing ? 16 : 10;
     cp1 = { x: pStart.x + dx * 0.35, y: pStart.y - arcY };
     cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y - arcY * 0.5 };
   } else if (color === YELLOW) {
-    // Оранжевые/Желтые: идеально гладкий, прямой и естественный перекат на свои позиции без искусственных смещений
-    cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
-    cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
+    if (!isInnerRing && idx >= 5) {
+      // 5 точек желтого внутреннего ромба: сразу делают шаг ВПРАВО И ВНИЗ, затем переходят во внешний купол
+      const stepRightX = isRight ? 22 : -22;
+      const stepDownY = 16;
+      cp1 = {
+        x: pStart.x + stepRightX,
+        y: pStart.y + stepDownY
+      };
+      cp2 = {
+        x: pEnd.x + (isRight ? 10 : -10),
+        y: pEnd.y - 6
+      };
+    } else {
+      // Остальные желтые точки купола и внутренней подушечки
+      cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
+      cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
+    }
   } else if (color === PINK_GRAY) {
     // Розово-серые: мягкий прямой вход в вертикальные стойки
     cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + dy * 0.25 };
