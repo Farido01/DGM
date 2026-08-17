@@ -1932,6 +1932,73 @@ y: gy(rowJ(rowEnd)),
     const hookTrackR1 = buildHookTrack(true, false);
     const hookTrackR2 = buildHookTrack(true, true);
 
+    function buildMasterRailTrack(isRight, isLine2) {
+      const colFn = isRight ? colR : colL;
+      const cBottom = isLine2 ? 26.0 : 25.0;
+      const rBottom = isLine2 ? 3.5 : 3.0;
+      const cMidDiag = isLine2 ? 18.5 : 17.5;
+      const rMidDiag = isLine2 ? 11.5 : 11.0;
+      const cTopDiag = isLine2 ? 12.0 : 11.0;
+      const rTopDiag = isLine2 ? 18.5 : 18.0;
+      const cPeak = isLine2 ? 10.7 : 10.0;
+      const rPeak = isLine2 ? 18.3 : 19.0;
+      const cArch1 = isLine2 ? 11.8 : 11.0;
+      const rArch1 = isLine2 ? 17.8 : 18.5;
+      const cArch2 = isLine2 ? 13.8 : 13.0;
+      const rArch2 = isLine2 ? 15.3 : 16.0;
+      const cArch3 = isLine2 ? 14.8 : 14.2;
+      const rArch3 = 11.5;
+      const cArchBot = isLine2 ? 15.0 : 14.5;
+      const rArchBot = 7.0;
+      const cClose = isLine2 ? 11.0 : 10.5;
+      const rCloseTop = 7.0;
+      const rCloseBot = 2.0;
+
+      const cp = [
+        { x: gx(colFn(cBottom)), y: gy(rowJ(rBottom)) },
+        { x: gx(colFn(cMidDiag)), y: gy(rowJ(rMidDiag)) },
+        { x: gx(colFn(cTopDiag)), y: gy(rowJ(rTopDiag)) },
+        { x: gx(colFn(cPeak)), y: gy(rowJ(rPeak)) },
+        { x: gx(colFn(cArch1)), y: gy(rowJ(rArch1)) },
+        { x: gx(colFn(cArch2)), y: gy(rowJ(rArch2)) },
+        { x: gx(colFn(cArch3)), y: gy(rowJ(rArch3)) },
+        { x: gx(colFn(cArchBot)), y: gy(rowJ(rArchBot)) },
+        { x: gx(colFn(cClose)), y: gy(rowJ(rCloseTop)) },
+        { x: gx(colFn(cClose)), y: gy(rowJ(rCloseBot)) },
+      ];
+
+      const pts = [];
+      const dists = [0];
+      let totalD = 0;
+      const numSegs = cp.length - 1;
+      const samplesPerSeg = 80;
+
+      for (let s = 0; s < numSegs; s++) {
+        const p0 = cp[Math.max(0, s - 1)];
+        const p1 = cp[s];
+        const p2 = cp[s + 1];
+        const p3 = cp[Math.min(cp.length - 1, s + 2)];
+
+        for (let i = 0; i < samplesPerSeg; i++) {
+          const t = i / samplesPerSeg;
+          const t2 = t * t, t3 = t2 * t;
+          const x = 0.5 * ((2*p1.x) + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3);
+          const y = 0.5 * ((2*p1.y) + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3);
+          pts.push({ x, y });
+          if (pts.length > 1) {
+            totalD += Math.hypot(x - pts[pts.length - 2].x, y - pts[pts.length - 2].y);
+            dists.push(totalD);
+          }
+        }
+      }
+      return { pts, dists, totalD };
+    }
+
+    const railL1 = buildMasterRailTrack(false, false);
+    const railL2 = buildMasterRailTrack(false, true);
+    const railR1 = buildMasterRailTrack(true, false);
+    const railR2 = buildMasterRailTrack(true, true);
+
     function buildHeadbandArch(isRight, isLine2) {
       const colFn = isRight ? colR : colL;
       const topCol = isLine2 ? 10.7 : 10.0;
@@ -1943,7 +2010,7 @@ y: gy(rowJ(rowEnd)),
         { x: gx(colFn(topCol)), y: gy(rowJ(topRow)) },
         { x: gx(colFn(isLine2 ? 11.8 : 11.0)), y: gy(rowJ(isLine2 ? 17.8 : 18.5)) },
         { x: gx(colFn(isLine2 ? 13.8 : 13.0)), y: gy(rowJ(isLine2 ? 15.3 : 16.0)) },
-        { x: gx(colFn(isLine2 ? 14.8 : 14.2)), y: gy(rowJ(11.0)) },
+        { x: gx(colFn(isLine2 ? 14.8 : 14.2)), y: gy(rowJ(11.5)) },
         { x: gx(colFn(botCol)), y: gy(rowJ(botRow)) }
       ];
 
@@ -1979,20 +2046,28 @@ y: gy(rowJ(rowEnd)),
     const hbR1 = buildHeadbandArch(true, false);
     const hbR2 = buildHeadbandArch(true, true);
 
+    const s_close_top_L1 = findNearestDist(railL1.pts, railL1.dists, { x: gx(colL(10.5)), y: gy(rowJ(7.0)) });
+    const s_close_top_L2 = findNearestDist(railL2.pts, railL2.dists, { x: gx(colL(11.0)), y: gy(rowJ(7.0)) });
+    const s_close_top_R1 = findNearestDist(railR1.pts, railR1.dists, { x: gx(colR(10.5)), y: gy(rowJ(7.0)) });
+    const s_close_top_R2 = findNearestDist(railR2.pts, railR2.dists, { x: gx(colR(11.0)), y: gy(rowJ(7.0)) });
+
     // Build 100 dot descriptors for left and right side
     const dotsLeft = [];
     const dotsRight = [];
 
-    // 1. Top 15 dots from Line 1 (Outer Headband dots 0..14)
+    // 1. Top 15 dots from Line 1 (Track 1, Outer Headband dots 0..14)
     for (let i = 0; i < 15; i++) {
-      const pHeadbandL1 = getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * (i / 39));
-      const pHeadbandR1 = getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * (i / 39));
+      const pFinalL = getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * (i / 39));
+      const pFinalR = getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * (i / 39));
       dotsLeft.push({
         lineNum: 1, lineDotIdx: i, lineTotal: 35,
         p0: Arc1_L_35[i],
         p1: L1_pts_35[i],
         p2: L1_pts_50[2 * i],
-        p3: pHeadbandL1,
+        p3: pFinalL,
+        railPts: railL1.pts, railDists: railL1.dists,
+        s0: findNearestDist(railL1.pts, railL1.dists, L1_pts_50[2 * i]),
+        s1: findNearestDist(railL1.pts, railL1.dists, pFinalL),
         color: BLACK_SQ,
         type: 'L1_top',
         idx: i,
@@ -2003,7 +2078,10 @@ y: gy(rowJ(rowEnd)),
         p0: Arc1_R_35[i],
         p1: R1_pts_35[i],
         p2: R1_pts_50[2 * i],
-        p3: pHeadbandR1,
+        p3: pFinalR,
+        railPts: railR1.pts, railDists: railR1.dists,
+        s0: findNearestDist(railR1.pts, railR1.dists, R1_pts_50[2 * i]),
+        s1: findNearestDist(railR1.pts, railR1.dists, pFinalR),
         color: BLACK_SQ,
         type: 'L1_top',
         idx: i,
@@ -2011,16 +2089,19 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 2. Top 15 dots from Line 2 (Outer Headband dots 15..29)
+    // 2. Top 15 dots from Line 2 (Track 1, Outer Headband dots 15..29)
     for (let i = 0; i < 15; i++) {
-      const pHeadbandL1 = getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((15 + i) / 39));
-      const pHeadbandR1 = getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((15 + i) / 39));
+      const pFinalL = getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((15 + i) / 39));
+      const pFinalR = getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((15 + i) / 39));
       dotsLeft.push({
         lineNum: 2, lineDotIdx: i, lineTotal: 35,
         p0: Arc2_L_35[i],
         p1: L2_pts_35[i],
         p2: L1_pts_50[2 * i + 1],
-        p3: pHeadbandL1,
+        p3: pFinalL,
+        railPts: railL1.pts, railDists: railL1.dists,
+        s0: findNearestDist(railL1.pts, railL1.dists, L1_pts_50[2 * i + 1]),
+        s1: findNearestDist(railL1.pts, railL1.dists, pFinalL),
         color: BLACK_SQ,
         type: 'L2_cross',
         idx: i,
@@ -2031,7 +2112,10 @@ y: gy(rowJ(rowEnd)),
         p0: Arc2_R_35[i],
         p1: R2_pts_35[i],
         p2: R1_pts_50[2 * i + 1],
-        p3: pHeadbandR1,
+        p3: pFinalR,
+        railPts: railR1.pts, railDists: railR1.dists,
+        s0: findNearestDist(railR1.pts, railR1.dists, R1_pts_50[2 * i + 1]),
+        s1: findNearestDist(railR1.pts, railR1.dists, pFinalR),
         color: BLACK_SQ,
         type: 'L2_cross',
         idx: i,
@@ -2039,46 +2123,37 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 3. Bottom 20 dots from Line 1:
+    // 3. Bottom 20 dots from Line 1 (Track 1):
     // First 10 (i=0..9) form Outer Headband dots 30..39 (connecting into headphone at 14.5:7)
     // Last 10 (i=10..19) march over hook to close left headphone wall (col 10.5, row 7..2)
     for (let i = 0; i < 20; i++) {
       const isClosing1 = (i >= 10);
-      const closeK = i - 10; // 0..9 (i=19 is leader at top of diagonal going to row 2)
+      const closeK = i - 10; // 0..9
       const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
 
-      let hookTrackL1_pts = null, hookTrackL1_dists = null, hookS0_L1 = 0, hookS1_L1 = 0;
-      let hookTrackR1_pts = null, hookTrackR1_dists = null, hookS0_R1 = 0, hookS1_R1 = 0;
+      let pFinalL, pFinalR, s1_L, s1_R;
       if (isClosing1) {
-        hookTrackL1_pts = hookTrackL1.pts;
-        hookTrackL1_dists = hookTrackL1.dists;
-        hookS0_L1 = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[30 + i]);
-        const s_top_L1 = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, { x: gx(colL(10.5)), y: gy(rowJ(7.0)) });
-        const s_bot_L1 = hookTrackL1.totalD;
-        hookS1_L1 = s_top_L1 + (s_bot_L1 - s_top_L1) * (closeK / 9);
-
-        hookTrackR1_pts = hookTrackR1.pts;
-        hookTrackR1_dists = hookTrackR1.dists;
-        hookS0_R1 = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[30 + i]);
-        const s_top_R1 = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, { x: gx(colR(10.5)), y: gy(rowJ(7.0)) });
-        const s_bot_R1 = hookTrackR1.totalD;
-        hookS1_R1 = s_top_R1 + (s_bot_R1 - s_top_R1) * (closeK / 9);
+        pFinalL = { x: gx(colL(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colL(10.5)), defaultY: gy(rowJ(closeR)) };
+        pFinalR = { x: gx(colR(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colR(10.5)), defaultY: gy(rowJ(closeR)) };
+        s1_L = s_close_top_L1 + (railL1.totalD - s_close_top_L1) * (closeK / 9);
+        s1_R = s_close_top_R1 + (railR1.totalD - s_close_top_R1) * (closeK / 9);
+      } else {
+        pFinalL = getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((30 + i) / 39));
+        pFinalR = getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((30 + i) / 39));
+        s1_L = findNearestDist(railL1.pts, railL1.dists, pFinalL);
+        s1_R = findNearestDist(railR1.pts, railR1.dists, pFinalR);
       }
-
-      const pHeadbandL1 = !isClosing1 ? getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((30 + i) / 39)) : null;
-      const pHeadbandR1 = !isClosing1 ? getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((30 + i) / 39)) : null;
 
       dotsLeft.push({
         lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc1_L_35[15 + i],
         p1: L1_pts_35[15 + i],
         p2: L1_pts_50[30 + i],
-        p3: isClosing1 ? null : pHeadbandL1,
-        pHeadphone: isClosing1 ? { x: gx(colL(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colL(10.5)), defaultY: gy(rowJ(closeR)) } : null,
-        hookTrackPts: hookTrackL1_pts,
-        hookTrackDists: hookTrackL1_dists,
-        hookS0: hookS0_L1,
-        hookS1: hookS1_L1,
+        p3: pFinalL,
+        pHeadphone: isClosing1 ? pFinalL : null,
+        railPts: railL1.pts, railDists: railL1.dists,
+        s0: findNearestDist(railL1.pts, railL1.dists, L1_pts_50[30 + i]),
+        s1: s1_L,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -2089,12 +2164,11 @@ y: gy(rowJ(rowEnd)),
         p0: Arc1_R_35[15 + i],
         p1: R1_pts_35[15 + i],
         p2: R1_pts_50[30 + i],
-        p3: isClosing1 ? null : pHeadbandR1,
-        pHeadphone: isClosing1 ? { x: gx(colR(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colR(10.5)), defaultY: gy(rowJ(closeR)) } : null,
-        hookTrackPts: hookTrackR1_pts,
-        hookTrackDists: hookTrackR1_dists,
-        hookS0: hookS0_R1,
-        hookS1: hookS1_R1,
+        p3: pFinalR,
+        pHeadphone: isClosing1 ? pFinalR : null,
+        railPts: railR1.pts, railDists: railR1.dists,
+        s0: findNearestDist(railR1.pts, railR1.dists, R1_pts_50[30 + i]),
+        s1: s1_R,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -2102,16 +2176,19 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 4. 30 purple dots from Line 3 (Inner Headband dots 0..29)
+    // 4. 30 purple dots from Line 3 (Track 2, Inner Headband dots 0..29)
     for (let i = 0; i < 30; i++) {
-      const pHeadbandL2 = getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * (i / 39));
-      const pHeadbandR2 = getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * (i / 39));
+      const pFinalL = getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * (i / 39));
+      const pFinalR = getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * (i / 39));
       dotsLeft.push({
         lineNum: 3, lineDotIdx: i, lineTotal: 30,
         p0: Arc3_L_30[i],
         p1: L3_pts_30[i],
         p2: L2_pts_50[i],
-        p3: pHeadbandL2,
+        p3: pFinalL,
+        railPts: railL2.pts, railDists: railL2.dists,
+        s0: findNearestDist(railL2.pts, railL2.dists, L2_pts_50[i]),
+        s1: findNearestDist(railL2.pts, railL2.dists, pFinalL),
         color: PURPLE,
         type: 'L3_march',
         idx: i,
@@ -2122,7 +2199,10 @@ y: gy(rowJ(rowEnd)),
         p0: Arc3_R_30[i],
         p1: R3_pts_30[i],
         p2: R2_pts_50[i],
-        p3: pHeadbandR2,
+        p3: pFinalR,
+        railPts: railR2.pts, railDists: railR2.dists,
+        s0: findNearestDist(railR2.pts, railR2.dists, R2_pts_50[i]),
+        s1: findNearestDist(railR2.pts, railR2.dists, pFinalR),
         color: PURPLE,
         type: 'L3_march',
         idx: i,
@@ -2130,7 +2210,7 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 5. Bottom 20 black dots from Line 2:
+    // 5. Bottom 20 black dots from Line 2 (Track 2):
     // First 10 (i=0..9) form Inner Headband dots 30..39 (connecting into headphone at 15:7)
     // Last 10 (i=10..19) march over hook to close left headphone inner wall (col 11.0, row 7..2)
     for (let i = 0; i < 20; i++) {
@@ -2138,38 +2218,29 @@ y: gy(rowJ(rowEnd)),
       const closeK = i - 10; // 0..9
       const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
 
-      let hookTrackL2_pts = null, hookTrackL2_dists = null, hookS0_L2 = 0, hookS1_L2 = 0;
-      let hookTrackR2_pts = null, hookTrackR2_dists = null, hookS0_R2 = 0, hookS1_R2 = 0;
+      let pFinalL, pFinalR, s1_L, s1_R;
       if (isClosing2) {
-        hookTrackL2_pts = hookTrackL2.pts;
-        hookTrackL2_dists = hookTrackL2.dists;
-        hookS0_L2 = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, L2_pts_50[30 + i]);
-        const s_top_L2 = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, { x: gx(colL(11.0)), y: gy(rowJ(7.0)) });
-        const s_bot_L2 = hookTrackL2.totalD;
-        hookS1_L2 = s_top_L2 + (s_bot_L2 - s_top_L2) * (closeK / 9);
-
-        hookTrackR2_pts = hookTrackR2.pts;
-        hookTrackR2_dists = hookTrackR2.dists;
-        hookS0_R2 = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, R2_pts_50[30 + i]);
-        const s_top_R2 = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, { x: gx(colR(11.0)), y: gy(rowJ(7.0)) });
-        const s_bot_R2 = hookTrackR2.totalD;
-        hookS1_R2 = s_top_R2 + (s_bot_R2 - s_top_R2) * (closeK / 9);
+        pFinalL = { x: gx(colL(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colL(11.0)), defaultY: gy(rowJ(closeR)) };
+        pFinalR = { x: gx(colR(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colR(11.0)), defaultY: gy(rowJ(closeR)) };
+        s1_L = s_close_top_L2 + (railL2.totalD - s_close_top_L2) * (closeK / 9);
+        s1_R = s_close_top_R2 + (railR2.totalD - s_close_top_R2) * (closeK / 9);
+      } else {
+        pFinalL = getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * ((30 + i) / 39));
+        pFinalR = getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * ((30 + i) / 39));
+        s1_L = findNearestDist(railL2.pts, railL2.dists, pFinalL);
+        s1_R = findNearestDist(railR2.pts, railR2.dists, pFinalR);
       }
-
-      const pHeadbandL2 = !isClosing2 ? getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * ((30 + i) / 39)) : null;
-      const pHeadbandR2 = !isClosing2 ? getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * ((30 + i) / 39)) : null;
 
       dotsLeft.push({
         lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc2_L_35[15 + i],
         p1: L2_pts_35[15 + i],
         p2: L2_pts_50[30 + i],
-        p3: isClosing2 ? null : pHeadbandL2,
-        pHeadphone: isClosing2 ? { x: gx(colL(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colL(11.0)), defaultY: gy(rowJ(closeR)) } : null,
-        hookTrackPts: hookTrackL2_pts,
-        hookTrackDists: hookTrackL2_dists,
-        hookS0: hookS0_L2,
-        hookS1: hookS1_L2,
+        p3: pFinalL,
+        pHeadphone: isClosing2 ? pFinalL : null,
+        railPts: railL2.pts, railDists: railL2.dists,
+        s0: findNearestDist(railL2.pts, railL2.dists, L2_pts_50[30 + i]),
+        s1: s1_L,
         color: isClosing2 ? BLACK_SQ : PURPLE,
         type: 'L2_bot',
         idx: i,
@@ -2180,12 +2251,11 @@ y: gy(rowJ(rowEnd)),
         p0: Arc2_R_35[15 + i],
         p1: R2_pts_35[15 + i],
         p2: R2_pts_50[30 + i],
-        p3: isClosing2 ? null : pHeadbandR2,
-        pHeadphone: isClosing2 ? { x: gx(colR(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colR(11.0)), defaultY: gy(rowJ(closeR)) } : null,
-        hookTrackPts: hookTrackR2_pts,
-        hookTrackDists: hookTrackR2_dists,
-        hookS0: hookS0_R2,
-        hookS1: hookS1_R2,
+        p3: pFinalR,
+        pHeadphone: isClosing2 ? pFinalR : null,
+        railPts: railR2.pts, railDists: railR2.dists,
+        s0: findNearestDist(railR2.pts, railR2.dists, R2_pts_50[30 + i]),
+        s1: s1_R,
         color: isClosing2 ? BLACK_SQ : PURPLE,
         type: 'L2_bot',
         idx: i,
@@ -2647,12 +2717,12 @@ y: gy(rowJ(rowEnd)),
           // 2:45..2:50 (5s): Стоят в 2-х диагональных линиях
           p = d.p2;
         } else if (tSec < 185.0) {
-          // 2:50..3:05 (15s): 10 участников маршируют по петле в наушники, а остальные одновременно продвигаются вперед по диагонали на их места
+          // 2:50..3:05 (15s): Плавный синхронный марш по рельсам в сторону круга и вниз в наушники
           const u = (tSec - 170.0) / 15.0;
           const s = easeInOutCubic(u);
-          if (d.hookTrackPts && d.hookTrackDists) {
-            const curDist = d.hookS0 + (d.hookS1 - d.hookS0) * s;
-            p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
+          if (d.railPts && d.railDists) {
+            const curDist = d.s0 + (d.s1 - d.s0) * s;
+            p = getPointAtDist(d.railPts, d.railDists, curDist);
           } else if (d.p3) {
             p = {
               x: d.p2.x + (d.p3.x - d.p2.x) * s,
@@ -2662,9 +2732,9 @@ y: gy(rowJ(rowEnd)),
             p = d.p2;
           }
         } else {
-          // 3:05+ : Фиксация в закрывающей вертикальной линии наушника или в сдвинутой диагонали
-          if (d.hookTrackPts && d.hookTrackDists) {
-            p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1);
+          // 3:05+ : Фиксация в параллельных дугах оголовья и стенках наушников
+          if (d.railPts && d.railDists) {
+            p = getPointAtDist(d.railPts, d.railDists, d.s1);
           } else if (d.p3) {
             p = d.p3;
           } else {
@@ -2701,9 +2771,9 @@ y: gy(rowJ(rowEnd)),
         } else if (tSec < 185.0) {
           const u = (tSec - 170.0) / 15.0;
           const s = easeInOutCubic(u);
-          if (d.hookTrackPts && d.hookTrackDists) {
-            const curDist = d.hookS0 + (d.hookS1 - d.hookS0) * s;
-            p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
+          if (d.railPts && d.railDists) {
+            const curDist = d.s0 + (d.s1 - d.s0) * s;
+            p = getPointAtDist(d.railPts, d.railDists, curDist);
           } else if (d.p3) {
             p = {
               x: d.p2.x + (d.p3.x - d.p2.x) * s,
@@ -2713,8 +2783,8 @@ y: gy(rowJ(rowEnd)),
             p = d.p2;
           }
         } else {
-          if (d.hookTrackPts && d.hookTrackDists) {
-            p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1);
+          if (d.railPts && d.railDists) {
+            p = getPointAtDist(d.railPts, d.railDists, d.s1);
           } else if (d.p3) {
             p = d.p3;
           } else {
