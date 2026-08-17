@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D Grid Layout Design - Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #090a0f;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    #app-layout {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #090a0f;
+    }
+
+    #stadium-container {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px 0 12px;
+      overflow: hidden;
+    }
+
+    #svg-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    /* ── Bottom Control Station (Placed fully BELOW the stadium) ── */
+    .bottom-controls-panel {
+      width: 100%;
+      background: #111422;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 100;
+      user-select: none;
+      box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.6);
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-group {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .btn {
+      background: transparent;
+      color: #cbd5e1;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn.active {
+      background: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.45);
+    }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-play {
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      padding: 6px 14px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-play:hover {
+      background: rgba(99, 102, 241, 0.32);
+      color: #ffffff;
+    }
+
+    .btn-play.playing {
+      background: #ef4444;
+      border-color: #f87171;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(239, 68, 68, 0.45);
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .slider-wrap input[type=range] {
+      width: 120px;
+      accent-color: #8b5cf6;
+      cursor: pointer;
+    }
+
+    /* ── Headphone Editor Sub-Bar ── */
+    .headphone-editor-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .editor-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+
+    .btn-tool {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-tool:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .btn-action {
+      background: rgba(99, 102, 241, 0.25);
+      border: 1px solid #818cf8;
+      color: #c7d2fe;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn-action:hover {
+      background: rgba(99, 102, 241, 0.4);
+      color: #fff;
+    }
+    .btn-action.danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #f87171;
+      color: #fca5a5;
+    }
+    .btn-action.danger:hover {
+      background: rgba(239, 68, 68, 0.35);
+      color: #fff;
+    }
+
+    /* Toast Notification */
+    .toast-notify {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid #38bdf8;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(56, 189, 248, 0.4);
+      color: #f8fafc;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .toast-notify.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(6px);
+    }
+
+    /* ── Floating Dot Info Card ── */
+    .dot-card {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 290px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 12px;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6);
+      color: #f8fafc;
+      padding: 10px 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      z-index: 1000;
+      animation: cardFadeIn 0.2s ease-out;
+      user-select: none;
+    }
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .dot-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+    .dot-card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .dot-card-icon {
+      font-size: 16px;
+    }
+    .dot-card-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #38bdf8;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .dot-card-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .dot-card-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+    .dot-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .dot-card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+    }
+    .dot-card-label {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    .dot-card-val {
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot-card-val-badge {
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .dot-card-val-dim {
+      font-family: monospace;
+      color: #cbd5e1;
+      font-size: 11.5px;
+    }
+    .color-swatch {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.7);
+    }
+    .interactive-dot {
+      cursor: pointer;
+      transition: r 0.15s ease, filter 0.15s ease;
+      pointer-events: all;
+    }
+    .interactive-dot:hover {
+      r: 6.5px !important;
+      filter: drop-shadow(0 0 7px #38bdf8) brightness(1.3);
+    }
+    #selection-layer {
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app-layout">
+    <!-- 1. Stadium Area (100% visible, completely clear of buttons) -->
+    <div id="stadium-container">
+      <div id="svg-container">
+        <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <pattern id="grid-pattern" width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#222" stroke-width="0.5" />
+            </pattern>
+          </defs>
+
+          <!-- Field Background & Border -->
+          <rect id="field-bg" fill="#18181b" />
+          <rect id="field-border" fill="none" stroke="#555" stroke-width="1.5" />
+
+          <!-- Axes / Lines -->
+          <g id="axes-layer"></g>
+
+          <!-- Labels -->
+          <g id="labels-layer"></g>
+
+          <!-- Guide outlines -->
+          <g id="guides-layer"></g>
+
+          <!-- Dynamic Performers Layers -->
+          <g id="diag-layer"></g>
+          <g id="circle-layer"></g>
+          <g id="diamond-layer"></g>
+          <g id="selection-layer"></g>
+        </svg>
+      </div>
+
+      <!-- Toast Notification for Swapping / Moving -->
+      <div id="toast-notify" class="toast-notify">✨ Точки успешно поменяны местами!</div>
+
+      <!-- Compact Floating Dot Info Card -->
+      <div id="dot-info-card" class="dot-card" style="display: none;">
+        <div class="dot-card-header">
+          <div class="dot-card-title-wrap">
+            <span id="card-dot-icon" class="dot-card-icon">👤</span>
+            <span id="card-dot-title" class="dot-card-title">Имя участника</span>
+          </div>
+          <button class="dot-card-close" onclick="closeDotCard()" title="Закрыть">✕</button>
+        </div>
+        <div class="dot-card-body">
+          <div class="dot-card-row">
+            <span class="dot-card-label">Группа:</span>
+            <span id="card-dot-group" class="dot-card-val">2-й Круг (R=7)</span>
+          </div>
+          <div class="dot-card-row">
+            <span class="dot-card-label">Цвет:</span>
+            <span id="card-dot-color-wrap" class="dot-card-val">
+              <span id="card-dot-swatch" class="color-swatch"></span>
+              <span id="card-dot-color-name">Красный</span>
+            </span>
+          </div>
+          <div class="dot-card-row">
+            <span class="dot-card-label">Координаты:</span>
+            <span id="card-dot-grid" class="dot-card-val-badge">Кол: 3.0R | Ряд: 27</span>
+          </div>
+          <div class="dot-card-row">
+            <span class="dot-card-label">SVG (X, Y):</span>
+            <span id="card-dot-svg" class="dot-card-val-dim">824.0, 336.0 px</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Bottom Control Station (Placed fully BELOW the stadium) -->
+    <div id="bottom-controls" class="bottom-controls-panel">
+      <!-- Row 1: Timeline Mode Buttons & Player Controls -->
+      <div class="controls-row">
+        <div class="btn-group">
+          <button class="btn active" id="btn-draw0" onclick="setMode(0.0000)">Старт (0с)</button>
+          <button class="btn" id="btn-draw1" onclick="setMode(34.5 / 185.0)">Вход кругов (34.5с)</button>
+          <button class="btn" id="btn-draw2" onclick="setMode(60.0 / 185.0)">4 круга (1:00)</button>
+          <button class="btn" id="btn-draw3" onclick="setMode(68.0 / 185.0)">Вход дуг (1:08)</button>
+          <button class="btn" id="btn-draw4" onclick="setMode(84.0 / 185.0)">3 дуги (1:24)</button>
+          <button class="btn" id="btn-draw5" onclick="setMode(120.0 / 185.0)">Переход (2:00)</button>
+          <button class="btn" id="btn-draw6" onclick="setMode(134.0 / 185.0)">В ромбы (2:14)</button>
+          <button class="btn" id="btn-draw7" onclick="setMode(165.0 / 185.0)">Ромбы (2:45)</button>
+          <button class="btn" id="btn-draw8" onclick="setMode(1.0000)">Наушники (3:05)</button>
+        </div>
+
+        <div class="player-controls">
+          <button class="btn-play" id="btn-play" onclick="togglePlay()">
+            <span id="play-icon">▶</span> <span id="play-text">Запустить с музыкой (3:05)</span>
+          </button>
+
+          <button class="btn" id="btn-mute" onclick="toggleMute()" title="Включить / выключить звук" style="padding: 6px 9px; font-size: 13px;">
+            <span id="mute-icon">🔊</span>
+          </button>
+
+          <div class="slider-wrap">
+            <span id="time-display" style="min-width: 50px; font-variant-numeric: tabular-nums;">0.0с</span>
+            <input type="range" id="progress-slider" min="0" max="1850" value="0" oninput="onSlider(this.value)">
+            <span>3:05.0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Headphone Fast Edit & Swap Bar (Shown during Headphones mode) -->
+      <div id="headphone-editor-bar" class="headphone-editor-bar" style="display: none;">
+        <div class="editor-badge">
+          <span>🎧 Редактор Наушников:</span>
+          <span id="editor-hint-text" style="color: #94a3b8; font-weight: normal;">Кликните кружочек для перемещения или обмена</span>
+        </div>
+        <div id="selected-dot-tools" style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; gap: 3px;">
+            <button class="btn-tool" onclick="onNudgeDot(0, -1)" title="Сдвиг Вверх">▲ Вверх</button>
+            <button class="btn-tool" onclick="onNudgeDot(0, 1)" title="Сдвиг Вниз">▼ Вниз</button>
+            <button class="btn-tool" onclick="onNudgeDot(-1, 0)" title="Сдвиг Влево">◀ Влево</button>
+            <button class="btn-tool" onclick="onNudgeDot(1, 0)" title="Сдвиг Вправо">▶ Вправо</button>
+          </div>
+          <button class="btn-action" onclick="onResetSelectedDot()">↩️ Сбросить точку</button>
+          <button class="btn-action danger" onclick="onResetAllHeadphones()">♻️ Сбросить все наушники</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bg-audio" src="DUSHANBE-3.wav" preload="auto"></audio>
+
+  <script>
+    // ── Field geometry ──────────────────────────────────────────────────────────
+    const COLS = 56, ROWS = 36, STEP = 24;
+    const DOT_R = 1, LABEL_PAD = 30, FONT_SIZE = 12;
+    const FIELD_W = COLS * STEP, FIELD_H = ROWS * STEP;
+    const SVG_W = 1920, SVG_H = 1080;
+    const TOTAL_W = LABEL_PAD + FIELD_W + LABEL_PAD;
+    const TOTAL_H = LABEL_PAD + FIELD_H + LABEL_PAD;
+    const BX = (SVG_W - TOTAL_W) / 2;
+    const BY = (SVG_H - TOTAL_H) / 2;
+    const FX = BX + LABEL_PAD;
+    const FY = BY + LABEL_PAD;
+
+    const R_D = 3;    // diamond circle radius (diameter 6px)
+    const R_S = 3;    // circle dots radius (diameter 6px)
+    const R_LINE = 3; // diagonal line circle radius (diameter 6px)
+
+    const RED = "#EF4444", YELLOW = "#F59E0B";
+    const GREEN = "#22C55E", PINK_GRAY = "#C4A0B5";
+    const BLACK_SQ = "#1E293B", PURPLE = "#9333EA";
+    const FONT = "'Inter', system-ui, sans-serif";
+    const TEXT_COLOR = "#FFFFFF", DOT_COLOR = "#0e00aa";
+
+    const gx = (c) => FX + c * STEP;
+    const gy = (r) => FY + r * STEP;
+    const colR = (l) => 28 + l;
+    const colL = (l) => 28 - l;
+    const rowJ = (l) => ROWS - l;
+
+    const INSET = 10 * Math.sqrt(2);
+
+    // Right outer
+    const RT = { x: gx(colR(14)), y: gy(rowJ(10)) };
+    const RR = { x: gx(colR(18)), y: gy(rowJ(6)) };
+    const RB = { x: gx(colR(14)), y: gy(rowJ(2)) };
+    const RL = { x: gx(colR(10)), y: gy(rowJ(6)) };
+    // Right inner
+    const RIT = { x: RT.x, y: RT.y + INSET };
+    const RIR = { x: RR.x - INSET, y: RR.y };
+    const RIB = { x: RB.x, y: RB.y - INSET };
+    const RIL = { x: RL.x + INSET, y: RL.y };
+
+    // Left outer
+    const LT = { x: gx(colL(14)), y: gy(rowJ(10)) };
+    const LR = { x: gx(colL(10)), y: gy(rowJ(6)) };
+    const LB = { x: gx(colL(14)), y: gy(rowJ(2)) };
+    const LL = { x: gx(colL(18)), y: gy(rowJ(6)) };
+    // Left inner
+    const LIT = { x: LT.x, y: LT.y + INSET };
+    const LIR = { x: LR.x - INSET, y: LR.y };
+    const LIB = { x: LB.x, y: LB.y - INSET };
+    const LIL = { x: LL.x + INSET, y: LL.y };
+
+    function sidePts(a, b, n = 10) {
+      return Array.from({ length: n }, (_, i) => ({
+        x: a.x + (b.x - a.x) * (i + 1) / (n + 1),
+        y: a.y + (b.y - a.y) * (i + 1) / (n + 1),
+      }));
+    }
+
+    function linePts(a, b, n) {
+      return Array.from({ length: n }, (_, i) => ({
+        x: a.x + (b.x - a.x) * i / (n - 1),
+        y: a.y + (b.y - a.y) * i / (n - 1),
+      }));
+    }
+
+    function circPts(cx, cy, r, n) {
+      return Array.from({ length: n }, (_, i) => {
+        const a = (2 * Math.PI * i) / n;
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+      });
+    }
+
+    const CIRC_CX = gx(28);
+    const CIRC_CY = gy(rowJ(15)); // Center shifted 1 row down to 0:15
+    const CIRC_R = 10 * STEP;
+    const CIRC_N = 140;
+
+    // Big circle open at the bottom between column 2L and 2R (140 dots)
+    // When openCols = 0, forms a fully closed 360-degree circle
+    function openCircPts(cx, cy, r, n = 140, openCols = 2) {
+      if (openCols <= 0.001) {
+        return Array.from({ length: n }, (_, i) => {
+          const a = (Math.PI / 2) + (2 * Math.PI * i) / n;
+          return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+        });
+      }
+      const openAngle = Math.asin(openCols / (r / STEP));
+      const startAngle = Math.PI / 2 + openAngle; // Opens at the bottom between 2L and 2R
+      const totalArc = 2 * Math.PI - 2 * openAngle;
+      return Array.from({ length: n }, (_, i) => {
+        const a = startAngle + (totalArc * i) / (n - 1);
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+      });
+    }
+
+    const polyStr = (...ps) => ps.map(p => `${p.x},${p.y}`).join(" ");
+
+    const rightOuter = [
+      { a: RT, b: RR, color: YELLOW },
+      { a: RR, b: RB, color: RED },
+      { a: RB, b: RL, color: PINK_GRAY },
+      { a: RL, b: RT, color: GREEN },
+    ];
+    const rightInner = [
+      { a: RIT, b: RIR, color: YELLOW },
+      { a: RIR, b: RIB, color: RED },
+      { a: RIB, b: RIL, color: PINK_GRAY },
+      { a: RIL, b: RIT, color: GREEN },
+    ];
+    const leftOuter = [
+      { a: LT, b: LL, color: YELLOW },
+      { a: LL, b: LB, color: RED },
+      { a: LB, b: LR, color: PINK_GRAY },
+      { a: LR, b: LT, color: GREEN },
+    ];
+    const leftInner = [
+      { a: LIT, b: LIL, color: YELLOW },
+      { a: LIL, b: LIB, color: RED },
+      { a: LIB, b: LIR, color: PINK_GRAY },
+      { a: LIR, b: LIT, color: GREEN },
+    ];
+
+    // ── 2nd Circle & 3rd Circle: Progressive Gap from Big Circle starting at Row 16 ──
+    // 2-й круг: открыт сверху (2..2) и снизу (2.2..2.2)
+    // 3-й круг: СВЕРХУ ПОЛНОСТЬЮ ЗАКРЫТ, открыт только снизу (2.2..2.2). Зазор строго 10px.
+    const R_IN1_BASE = 8.5 * STEP; // 204px (зазор 36px сбоку на 16 ряду)
+
+    const diamondDots = [];
+
+    function buildMasterTrack(isRight, isInnerRing, sides) {
+      const isGoingToInner = (sides === rightInner || sides === leftInner);
+
+      const exitCol = isGoingToInner ? 1.4 : 0.9;
+      const exitRow = isGoingToInner ? 4.5 : 4.1; // Shifted 1 row down with circle
+      const exitX = isRight ? gx(colR(exitCol)) : gx(colL(exitCol));
+      const exitY = gy(rowJ(exitRow));
+
+      const midAngle = isRight ? 0 : Math.PI;
+
+      // Helper to compute circle point at angle a
+      function getCirclePt(a) {
+        const da = Math.abs(a - midAngle);
+        const fr = Math.min(1, da / (Math.PI / 2));
+        const off = 1.15 * STEP * Math.pow(fr, 1.25);
+        const r = (R_IN1_BASE - off) - (isInnerRing ? 10 : 0);
+        return {
+          x: CIRC_CX + r * Math.cos(a),
+          y: CIRC_CY + r * Math.sin(a),
+        };
+      }
+
+      // Угол нижнего выхода a0 точно соответствует колонке выхода (1.4 для 2-го круга, 0.9 для 3-го)
+      const rAtExit = (R_IN1_BASE - 1.15 * STEP) - (isInnerRing ? 10 : 0);
+      const botAngle = Math.asin(Math.min(1, (exitCol * STEP) / rAtExit));
+      const topAngle = Math.asin(Math.min(1, (2.0 * STEP) / (R_IN1_BASE - 1.15 * STEP)));
+
+      const a0 = isRight ? (Math.PI / 2 - botAngle) : (Math.PI / 2 + botAngle);
+      const a3 = isRight ? (-Math.PI / 2 + 0.70) : (3 * Math.PI / 2 - 0.70);
+      const stepA = (a3 - a0) / 3;
+      const a1 = a0 + stepA;
+      const a2 = a0 + 2 * stepA;
+
+      let aTop;
+      if (!isInnerRing) {
+        aTop = isRight ? (-Math.PI / 2 + topAngle) : (3 * Math.PI / 2 - topAngle);
+      } else {
+        aTop = isRight ? (-Math.PI / 2) : (3 * Math.PI / 2);
+      }
+
+      const trackPts = [];
+
+      // 1. Движение по кругу вниз к выходу a0 (верхние точки немного закрываются/смещаются по дуге вниз)
+      const ARC_STEPS = 60;
+      for (let s = 0; s <= ARC_STEPS; s++) {
+        const a = aTop + (a0 - aTop) * (s / ARC_STEPS);
+        trackPts.push(getCirclePt(a));
+      }
+
+      // 2. Движение по ПРЯМОЙ ВЕРТИКАЛЬНОЙ ЛИНИИ ВНИЗ к ряду 5.5 / 5.1
+      const ptAtA0 = trackPts[trackPts.length - 1];
+      const DOWN_STEPS = 15;
+      for (let s = 1; s <= DOWN_STEPS; s++) {
+        const u = s / DOWN_STEPS;
+        trackPts.push({
+          x: ptAtA0.x + (exitX - ptAtA0.x) * u, // строго вертикально
+          y: ptAtA0.y + (exitY - ptAtA0.y) * u, // прямо вниз
+        });
+      }
+
+      // 3. Коридор к ромбу (в точке 10:6 делаем увеличенный свободный зазор 15px, чтобы зазор был хорошо виден)
+      const diamondEntry = sides[3].a; // RL for outer, RIL for inner
+      const CORR_STEPS = 35;
+      const GAP_AT_10_6 = 15; // px увеличенный зазор в точке 10:6
+
+      for (let s = 1; s <= CORR_STEPS; s++) {
+        const u = s / CORR_STEPS;
+        const targetX = exitX + (diamondEntry.x - exitX) * u;
+        const targetY = isGoingToInner
+          ? (u < 0.85
+              ? exitY + (diamondEntry.y - GAP_AT_10_6 - exitY) * (u / 0.85)
+              : (diamondEntry.y - GAP_AT_10_6) + GAP_AT_10_6 * ((u - 0.85) / 0.15))
+          : exitY + (diamondEntry.y - exitY) * u;
+        trackPts.push({ x: targetX, y: targetY });
+      }
+
+      // 4. Diamond perimeter loop: sides[3].a (entry) -> sides[1].b -> sides[1].a -> sides[0].a -> sides[3].a
+      const v_entry = sides[3].a; // RL / RIL
+      const v_bot   = sides[1].b; // RB / RIB
+      const v_right = sides[1].a; // RR / RIR
+      const v_top   = sides[0].a; // RT / RIT
+
+      function addLinearSeg(pA, pB, count = 20) {
+        for (let s = 1; s <= count; s++) {
+          const u = s / count;
+          trackPts.push({
+            x: pA.x + (pB.x - pA.x) * u,
+            y: pA.y + (pB.y - pA.y) * u,
+          });
+        }
+      }
+
+      addLinearSeg(v_entry, v_bot, 20);   // Side 1: 10:6 -> 14:2 (Pink-Gray)
+      addLinearSeg(v_bot, v_right, 20);  // Side 2: 14:2 -> 18:6 (Red)
+      addLinearSeg(v_right, v_top, 20);  // Side 3: 18:6 -> 14:10 (Yellow)
+      addLinearSeg(v_top, v_entry, 20);  // Side 4: 14:10 -> 10:6 (Green)
+
+      // Compute cumulative distances
+      const trackDists = [0];
+      let totalD = 0;
+      for (let i = 0; i < trackPts.length - 1; i++) {
+        totalD += Math.hypot(trackPts[i+1].x - trackPts[i].x, trackPts[i+1].y - trackPts[i].y);
+        trackDists.push(totalD);
+      }
+
+      return {
+        trackPts,
+        trackDists,
+        totalD,
+        a0, a1, a2, a3, aTop,
+        getCirclePt,
+        v_entry, v_bot, v_right, v_top,
+      };
+    }
+
+    function findTrackDist(trackPts, trackDists, targetPt, hintStartIdx = 0, hintEndIdx = trackPts.length - 1) {
+      let bestDist = 0;
+      let minDistSq = Infinity;
+      for (let i = hintStartIdx; i < hintEndIdx; i++) {
+        const pA = trackPts[i];
+        const pB = trackPts[i + 1];
+        const dx = pB.x - pA.x;
+        const dy = pB.y - pA.y;
+        const lenSq = dx * dx + dy * dy;
+        let u = 0;
+        if (lenSq > 0) {
+          u = ((targetPt.x - pA.x) * dx + (targetPt.y - pA.y) * dy) / lenSq;
+          u = Math.max(0, Math.min(1, u));
+        }
+        const projX = pA.x + u * dx;
+        const projY = pA.y + u * dy;
+        const distSq = (targetPt.x - projX) ** 2 + (targetPt.y - projY) ** 2;
+        if (distSq < minDistSq) {
+          minDistSq = distSq;
+          bestDist = trackDists[i] + u * Math.hypot(dx, dy);
+        }
+      }
+      return bestDist;
+    }
+
+    function getPointAtDist(trackPts, trackDists, d) {
+      if (d <= 0) return trackPts[0];
+      const maxD = trackDists[trackDists.length - 1];
+      if (d >= maxD) return trackPts[trackPts.length - 1];
+
+      let low = 0, high = trackDists.length - 1;
+      while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (trackDists[mid] <= d) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+      const idx = Math.max(0, high);
+      const d0 = trackDists[idx];
+      const d1 = trackDists[idx + 1];
+      const frac = (d1 > d0) ? (d - d0) / (d1 - d0) : 0;
+      const p0 = trackPts[idx];
+      const p1 = trackPts[idx + 1];
+      return {
+        x: p0.x + (p1.x - p0.x) * frac,
+        y: p0.y + (p1.y - p0.y) * frac,
+      };
+    }
+
+    function buildDiamondGroup(isRight, isInnerRing, sides) {
+      const track = buildMasterTrack(isRight, isInnerRing, sides);
+      const { trackPts, trackDists, a0, a1, a2, a3, aTop, getCirclePt, v_entry, v_bot, v_right, v_top } = track;
+
+      const diamondStartIndex = 60 + 15 + 25; // Index where diamond loop starts in trackPts
+
+      // 4 color groups in order from leader (Green) to caboose (Pink-Gray)
+      const colorConfigs = [
+        {
+          color: GREEN,
+          order: 0,
+          fromA: a0,
+          toA: a1,
+          sidePtsArr: sidePts(v_top, v_entry, 10), // Side 4: 14:10 -> 10:6
+        },
+        {
+          color: YELLOW,
+          order: 1,
+          fromA: a1,
+          toA: a2,
+          sidePtsArr: sidePts(v_right, v_top, 10), // Side 3: 18:6 -> 14:10
+        },
+        {
+          color: RED,
+          order: 2,
+          fromA: a2,
+          toA: a3,
+          sidePtsArr: sidePts(v_bot, v_right, 10), // Side 2: 14:2 -> 18:6
+        },
+        {
+          color: PINK_GRAY,
+          order: 3,
+          fromA: a3,
+          toA: aTop,
+          sidePtsArr: sidePts(v_entry, v_bot, 10), // Side 1: 10:6 -> 14:2
+        },
+      ];
+
+      colorConfigs.forEach(({ color, order, fromA, toA, sidePtsArr }) => {
+        for (let idx = 0; idx < 10; idx++) {
+          const angle = fromA + (toA - fromA) * (idx / 9);
+          const p0 = getCirclePt(angle);
+          const p1 = sidePtsArr[9 - idx]; // Leader (idx=0) walks furthest to end of side
+
+          const s0 = findTrackDist(trackPts, trackDists, p0, 0, 60);
+          const s1 = findTrackDist(trackPts, trackDists, p1, diamondStartIndex, trackPts.length - 1);
+
+          diamondDots.push({
+            p0,
+            p1,
+            s0,
+            s1,
+            trackPts,
+            trackDists,
+            color,
+            order,
+            idx,
+            isRight,
+            isInnerRing,
+          });
+        }
+      });
+    }
+
+    // Внешний 2-й круг переходит во ВНУТРЕННИЙ ромб
+    // Внутренний 3-й круг переходит во ВНЕШНИЙ ромб
+    buildDiamondGroup(true, false, rightInner); // 2nd Circle (Outer in circle) -> Inner Diamond
+    buildDiamondGroup(true, true, rightOuter);  // 3rd Circle (Inner in circle) -> Outer Diamond
+    buildDiamondGroup(false, false, leftInner); // 2nd Circle (Outer in circle) -> Inner Diamond
+    buildDiamondGroup(false, true, leftOuter);  // 3rd Circle (Inner in circle) -> Outer Diamond
+
+    // ── Позиции в Исходном состоянии (Рисунок 0, t = 0: 4 концентрических круга) ──
+    // 1-й круг: R = 10 (140 точек, полностью закрытый снизу)
+    // 2-й круг: R = 7 (100 точек: 50 слева, 50 справа) — ЗАКРЫТ СВЕРХУ 20 розово-серыми точками!
+    // 3-й круг: R = 4 (50 точек: 25 слева, 25 справа) — закрыт снизу
+    // 4-й круг: R = 1 (10 красных точек: 5 слева, 5 справа) — самый внутренний круг
+    function getCircleHalfPt(r, index, count, isRight) {
+      // index = 0 (снизу) ... count - 1 (сверху)
+      const a = isRight
+        ? (Math.PI / 2 - Math.PI * (index + 0.5) / count)
+        : (Math.PI / 2 + Math.PI * (index + 0.5) / count);
+      return {
+        x: CIRC_CX + r * Math.cos(a),
+        y: CIRC_CY + r * Math.sin(a),
+      };
+    }
+
+    diamondDots.forEach(d => {
+      let pInit;
+      if (!d.isInnerRing) {
+        // 2-й круг (rightInner / leftInner) — 40 точек на 2-м круге R=7:
+        if (d.color === GREEN) {
+          // 10 Green снизу (индексы 0..9)
+          pInit = getCircleHalfPt(7 * STEP, d.idx, 50, d.isRight);
+        } else if (d.color === YELLOW) {
+          // 10 Yellow (индексы 10..19)
+          pInit = getCircleHalfPt(7 * STEP, 10 + d.idx, 50, d.isRight);
+        } else if (d.color === RED) {
+          // 10 Red (индексы 20..29)
+          pInit = getCircleHalfPt(7 * STEP, 20 + d.idx, 50, d.isRight);
+        } else if (d.color === PINK_GRAY) {
+          // 10 Pink-Gray (индексы 30..39)
+          pInit = getCircleHalfPt(7 * STEP, 30 + d.idx, 50, d.isRight);
+        }
+      } else {
+        // 3-й круг (rightOuter / leftOuter):
+        if (d.color === PINK_GRAY) {
+          // 10 Pink-Gray на САМОМ ВЕРХУ 2-го круга R=7 (индексы 40..49) — ЗАКРЫВАЮТ ВЕРХ!
+          pInit = getCircleHalfPt(7 * STEP, 40 + d.idx, 50, d.isRight);
+        } else if (d.color === GREEN) {
+          // 10 Green на 3-м круге R=4 (индексы 0..9)
+          pInit = getCircleHalfPt(4 * STEP, d.idx, 25, d.isRight);
+        } else if (d.color === YELLOW) {
+          // 10 Yellow на 3-м круге R=4 (индексы 10..19)
+          pInit = getCircleHalfPt(4 * STEP, 10 + d.idx, 25, d.isRight);
+        } else if (d.color === RED) {
+          if (d.idx < 5) {
+            // 5 Red на 3-м круге R=4 (индексы 20..24)
+            pInit = getCircleHalfPt(4 * STEP, 20 + d.idx, 25, d.isRight);
+          } else {
+            // 5 Red в 4-м самом внутреннем круге R=1 (индексы 0..4) — 4-й круг!
+            pInit = getCircleHalfPt(1 * STEP, d.idx - 5, 5, d.isRight);
+          }
+        }
+      }
+      d.pInit = pInit || d.p0;
+    });
+
+    // ── Позиции в Фигуре «Наушники» (переход 2:50..3:05, 80 точек слева, 80 точек справа) ──
+    // ЕДИНЫЕ НЕПРЕРЫВНЫЕ МАСТЕР-ДУГИ С ИДЕАЛЬНО РАВНОМЕРНЫМ ШАГОМ И ПОСТОЯННЫМ ЗАЗОРОМ 0.70
+    function buildHeadphoneGeometry() {
+      const N = 1000;
+      
+      // 1. Внешний непрерывный контур (35 точек: 10 зеленых + 15 желтых + 10 красных)
+      const outerPoly = [];
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        let c, r;
+        if (t <= 0.38) {
+          const u = t / 0.38;
+          const p0 = {c: 11.0, r: 7.0}, p1 = {c: 13.5, r: 7.7}, p2 = {c: 16.2, r: 7.3}, p3 = {c: 17.0, r: 5.8};
+          const v = 1 - u;
+          c = v*v*v*p0.c + 3*v*v*u*p1.c + 3*v*u*u*p2.c + u*u*u*p3.c;
+          r = v*v*v*p0.r + 3*v*v*u*p1.r + 3*v*u*u*p2.r + u*u*u*p3.r;
+        } else if (t <= 0.62) {
+          const u = (t - 0.38) / 0.24;
+          c = 17.0;
+          r = 5.8 - (5.8 - 3.2) * u;
+        } else {
+          const u = (t - 0.62) / 0.38;
+          const p0 = {c: 17.0, r: 3.2}, p1 = {c: 16.2, r: 1.7}, p2 = {c: 13.5, r: 1.3}, p3 = {c: 11.0, r: 2.0};
+          const v = 1 - u;
+          c = v*v*v*p0.c + 3*v*v*u*p1.c + 3*v*u*u*p2.c + u*u*u*p3.c;
+          r = v*v*v*p0.r + 3*v*v*u*p1.r + 3*v*u*u*p2.r + u*u*u*p3.r;
+        }
+        outerPoly.push({ c, r });
+      }
+
+      const outerDists = [0];
+      for (let i = 1; i < outerPoly.length; i++) {
+        const dc = outerPoly[i].c - outerPoly[i-1].c;
+        const dr = outerPoly[i].r - outerPoly[i-1].r;
+        outerDists.push(outerDists[i-1] + Math.hypot(dc, dr));
+      }
+      const outerLen = outerDists[outerDists.length - 1];
+
+      const outer35 = [];
+      for (let i = 0; i < 35; i++) {
+        const targetDist = (i / 34) * outerLen;
+        let low = 0, high = outerDists.length - 1;
+        while (low <= high) {
+          const mid = (low + high) >> 1;
+          if (outerDists[mid] <= targetDist) low = mid + 1;
+          else high = mid - 1;
+        }
+        const idx = Math.max(0, high);
+        const d0 = outerDists[idx];
+        const d1 = outerDists[idx + 1] || d0;
+        const frac = d1 > d0 ? (targetDist - d0) / (d1 - d0) : 0;
+        const p0 = outerPoly[idx];
+        const p1 = outerPoly[idx + 1] || p0;
+        outer35.push({
+          c: p0.c + (p1.c - p0.c) * frac,
+          r: p0.r + (p1.r - p0.r) * frac
+        });
+      }
+
+      // 2. Внутренний непрерывный контур (25 точек: 10 зеленых + 5 желтых + 10 красных)
+      const innerPoly = [];
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        let c, r;
+        if (t <= 0.38) {
+          const u = t / 0.38;
+          const p0 = {c: 11.0, r: 6.3}, p1 = {c: 13.5, r: 7.0}, p2 = {c: 15.6, r: 6.7}, p3 = {c: 16.3, r: 6.0};
+          const v = 1 - u;
+          c = v*v*v*p0.c + 3*v*v*u*p1.c + 3*v*u*u*p2.c + u*u*u*p3.c;
+          r = v*v*v*p0.r + 3*v*v*u*p1.r + 3*v*u*u*p2.r + u*u*u*p3.r;
+        } else if (t <= 0.62) {
+          const u = (t - 0.38) / 0.24;
+          c = 16.3;
+          r = 6.0 - (6.0 - 3.0) * u;
+        } else {
+          const u = (t - 0.62) / 0.38;
+          const p0 = {c: 16.3, r: 3.0}, p1 = {c: 15.6, r: 2.3}, p2 = {c: 13.5, r: 2.0}, p3 = {c: 11.0, r: 2.7};
+          const v = 1 - u;
+          c = v*v*v*p0.c + 3*v*v*u*p1.c + 3*v*u*u*p2.c + u*u*u*p3.c;
+          r = v*v*v*p0.r + 3*v*v*u*p1.r + 3*v*u*u*p2.r + u*u*u*p3.r;
+        }
+        innerPoly.push({ c, r });
+      }
+
+      const innerDists = [0];
+      for (let i = 1; i < innerPoly.length; i++) {
+        const dc = innerPoly[i].c - innerPoly[i-1].c;
+        const dr = innerPoly[i].r - innerPoly[i-1].r;
+        innerDists.push(innerDists[i-1] + Math.hypot(dc, dr));
+      }
+      const innerLen = innerDists[innerDists.length - 1];
+
+      const inner25 = [];
+      for (let i = 0; i < 25; i++) {
+        const targetDist = (i / 24) * innerLen;
+        let low = 0, high = innerDists.length - 1;
+        while (low <= high) {
+          const mid = (low + high) >> 1;
+          if (innerDists[mid] <= targetDist) low = mid + 1;
+          else high = mid - 1;
+        }
+        const idx = Math.max(0, high);
+        const d0 = innerDists[idx];
+        const d1 = innerDists[idx + 1] || d0;
+        const frac = d1 > d0 ? (targetDist - d0) / (d1 - d0) : 0;
+        const p0 = innerPoly[idx];
+        const p1 = innerPoly[idx + 1] || p0;
+        inner25.push({
+          c: p0.c + (p1.c - p0.c) * frac,
+          r: p0.r + (p1.r - p0.r) * frac
+        });
+      }
+
+      return { outer35, inner25 };
+    }
+
+    const headphoneGeo = buildHeadphoneGeometry();
+
+    function getHeadphonePos(d) {
+      const isRight = d.isRight;
+      const isOuter = d.isInnerRing; // true = outer diamond, false = inner diamond
+      const colFn = isRight ? colR : colL;
+      const i = d.idx; // 0..9
+
+      let c, r;
+      if (d.color === GREEN) {
+        if (isOuter) {
+          // Внешняя зеленая дуга (10 точек, индексы 0..9 по внешнему контуру)
+          const pt = headphoneGeo.outer35[i];
+          c = pt.c;
+          r = pt.r;
+        } else {
+          // Внутренняя зеленая дуга (10 точек, индексы 0..9 по внутреннему контуру)
+          const pt = headphoneGeo.inner25[i];
+          c = pt.c;
+          r = pt.r;
+        }
+      } else if (d.color === YELLOW) {
+        if (!isOuter) {
+          if (i < 5) {
+            // Внутренняя подушечка наушника (5 точек, индексы 10..14 по внутреннему контуру)
+            const pt = headphoneGeo.inner25[10 + i];
+            c = pt.c;
+            r = pt.r;
+          } else {
+            // Нижняя часть внешней дуги (5 точек, индексы 20..24 по внешнему контуру)
+            const pt = headphoneGeo.outer35[20 + (i - 5)];
+            c = pt.c;
+            r = pt.r;
+          }
+        } else {
+          // Верхняя и средняя часть внешнего купола (10 точек, индексы 10..19 по внешнему контуру)
+          const pt = headphoneGeo.outer35[10 + i];
+          c = pt.c;
+          r = pt.r;
+        }
+      } else if (d.color === RED) {
+        if (isOuter) {
+          // Внешняя красная дуга (10 точек, индексы 25..34 по внешнему контуру)
+          const pt = headphoneGeo.outer35[25 + i];
+          c = pt.c;
+          r = pt.r;
+        } else {
+          // Внутренняя красная дуга (10 точек, индексы 15..24 по внутреннему контуру)
+          const pt = headphoneGeo.inner25[15 + i];
+          c = pt.c;
+          r = pt.r;
+        }
+      } else if (d.color === PINK_GRAY) {
+        // Двойная вертикальная стойка (колонки 12.8 и 13.5, постоянный зазор 0.70)
+        if (isOuter) {
+          c = 12.8;
+          r = 2.8 + (6.2 - 2.8) * (i / 9);
+        } else {
+          c = 13.5;
+          r = 2.8 + (6.2 - 2.8) * (i / 9);
+        }
+      }
+
+      return {
+        x: gx(colFn(c)),
+        y: gy(rowJ(r)),
+        defaultX: gx(colFn(c)),
+        defaultY: gy(rowJ(r)),
+      };
+    }
+
+    function makeHeadphoneTrack(pStart, pEnd, color, isInnerRing, isRight, idx) {
+      const dx = pEnd.x - pStart.x;
+      const dy = pEnd.y - pStart.y;
+      
+      let cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
+      let cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
+
+      if (color === RED) {
+        // Красные: мягкая, плавная и красивая нижняя дуга без излишних уходов
+        const arcY = isInnerRing ? 16 : 10;
+        cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + arcY };
+        cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y + arcY * 0.5 };
+      } else if (color === GREEN) {
+        // Зеленые: мягкая, плавная и красивая верхняя дуга
+        const arcY = isInnerRing ? 16 : 10;
+        cp1 = { x: pStart.x + dx * 0.35, y: pStart.y - arcY };
+        cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y - arcY * 0.5 };
+      } else if (color === YELLOW) {
+        if (!isInnerRing && idx >= 5) {
+          // 5 точек внутреннего ромба: аккуратное, плавное скольжение в нижний внешний купол
+          const outX = isRight ? 16 : -16;
+          cp1 = { x: pStart.x + dx * 0.3 + outX, y: pStart.y + dy * 0.35 };
+          cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 8 };
+        } else {
+          // Плавный обход периметра купола
+          const outX = isRight ? (isInnerRing ? 18 : 8) : (isInnerRing ? -18 : -8);
+          cp1 = { x: pStart.x + dx * 0.4 + outX, y: pStart.y + dy * 0.25 };
+          cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 6 };
+        }
+      } else if (color === PINK_GRAY) {
+        // Розово-серые: мягкий прямой вход в вертикальные стойки
+        cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + dy * 0.25 };
+        cp2 = { x: pEnd.x - dx * 0.25, y: pEnd.y - dy * 0.25 };
+      }
+
+      const pts = [];
+      const N = 40;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const v = 1 - t;
+        const x = v*v*v*pStart.x + 3*v*v*t*cp1.x + 3*v*t*t*cp2.x + t*t*t*pEnd.x;
+        const y = v*v*v*pStart.y + 3*v*v*t*cp1.y + 3*v*t*t*cp2.y + t*t*t*pEnd.y;
+        pts.push({ x, y });
+      }
+
+      const dists = [0];
+      for (let i = 1; i < pts.length; i++) {
+        dists.push(dists[i-1] + Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y));
+      }
+
+      return { pts, dists, totalLen: dists[dists.length - 1] };
+    }
+
+    function updateDotHpTrack(d) {
+      if (!d || !d.p1 || !d.pHeadphone) return;
+      const tr = makeHeadphoneTrack(d.p1, d.pHeadphone, d.color, d.isInnerRing, d.isRight, d.idx);
+      d.hpTrackPts = tr.pts;
+      d.hpTrackDists = tr.dists;
+      d.hpTotalLen = tr.totalLen;
+    }
+
+    function initAllHeadphoneTracks() {
+      diamondDots.forEach(d => {
+        d.pHeadphone = getHeadphonePos(d);
+        updateDotHpTrack(d);
+      });
+    }
+    initAllHeadphoneTracks();
+
+    // ── Позиции в Коробке для 1-го Круга (4x35: колонки 18, 18.5, 19, 19.5, ряд 28) ──
+    const R1 = 10 * STEP; // R = 10 (240px)
+    const deltaS1 = (2 * Math.PI * R1) / 140; // Точная дистанция 1-го круга = 10.7714px
+    const yRow28 = gy(rowJ(28)); // Ряд 28 (296.0px)
+    const colOffsets1 = [18.0, 18.5, 19.0, 19.5];
+
+    // Точка захода 1-го круга: точно заданные SVG-координаты X: 1200.0px, Y: 607.3px
+    const trackX1 = 1200.0;
+    const entryY1 = 607.3;
+    const a_entry1 = Math.atan2(entryY1 - CIRC_CY, trackX1 - CIRC_CX);
+
+    // ── Позиции в Коробке для 2-го Круга (4x25 справа: 3.0, 2.5, 2.0, 1.5) ──
+    const R2 = 7 * STEP;
+    const deltaS = (2 * Math.PI * R2) / 100; // Точная дистанция между участниками 2-го круга = 10.556px
+    const yRow27 = gy(rowJ(27)); // Ряд 27 сбоку
+
+    // Точка входа 2-го круга: точно заданные SVG-координаты X: 1127.9px, Y: 606.7px
+    const trackX = 1127.9;
+    const entryY = 606.7;
+    const a_entry = Math.atan2(entryY - CIRC_CY, trackX - CIRC_CX);
+
+    const colOffsets2 = [3.0, 2.5, 2.0, 1.5];
+
+    function getBoxPt(colRightOffset, k) {
+      return {
+        x: gx(colR(colRightOffset)),
+        y: yRow27 - k * deltaS,
+      };
+    }
+
+    // ── Позиции в Коробке для 3-го Круга (2x25 справа: 1.0 и 0.5) ──────────────
+    const R3 = 4 * STEP; // R = 4 (96px)
+    const deltaS3 = (2 * Math.PI * R3) / 50; // Точная дистанция 3-го круга = 12.064px
+
+    // Точка входа 3-го круга: строго координата 4:15 (колонка 4R, ряд 15)
+    const trackX3 = gx(colR(4.0));
+    const entryY3 = gy(rowJ(15.0));
+    const a_entry3 = 0; // Строго 3 часа на правом краю круга R=4
+
+    const colOffsets3 = [1.0, 0.5];
+
+    function getBoxPt3(colRightOffset, k) {
+      return {
+        x: gx(colR(colRightOffset)),
+        y: yRow27 - k * deltaS3,
+      };
+    }
+
+    // ── Позиции в Коробке для 4-го Круга (1x10 в колонке 0: 10 красных) ────────
+    const R4 = 1 * STEP; // R = 1 (24px)
+    const deltaS4 = (2 * Math.PI * R4) / 10; // Точная дистанция 4-го круга = 15.080px
+    const trackX4 = gx(colR(1.0)); // Правый край 4-го круга (976.0px)
+    const entryY4 = gy(rowJ(15.0)); // Ряд 15 (608.0px)
+    const a_entry4 = 0; // 3 часа (согласовано со 2-м и 3-м кругами)
+
+    function getBoxPt4(k) {
+      return {
+        x: CIRC_CX,
+        y: yRow27 - k * deltaS4,
+      };
+    }
+
+    // ── Геометрическое распределение участников по кругам и коробкам ────────────
+    // Сохраняет подлинные координаты d.pInit (Рисунок 0) и обеспечивает 100% плавный переход в 2 круга (Рисунок 1)
+
+    // 2-й Круг (100 точек):
+    const circle2Dots = diamondDots.filter(d => !d.isInnerRing || (d.isInnerRing && d.color === PINK_GRAY));
+    circle2Dots.forEach(d => {
+      d.circleNum = 2;
+      const a = Math.atan2(d.pInit.y - CIRC_CY, d.pInit.x - CIRC_CX);
+      let da = a - a_entry;
+      while (da <= 0.0001) da += 2 * Math.PI;
+      while (da > 2 * Math.PI) da -= 2 * Math.PI;
+      d.da = da;
+    });
+    circle2Dots.sort((a, b) => b.da - a.da);
+    circle2Dots.forEach((d, m) => {
+      d.trainIdx = m;
+      const c = Math.floor(m / 25); // 0..3 (колонки 3.0, 2.5, 2.0, 1.5)
+      const k = m % 25; // 0..24
+      d.pBox = getBoxPt(colOffsets2[c], k);
+    });
+
+    // 3-й Круг (50 точек):
+    const circle3Dots = diamondDots.filter(d => d.isInnerRing && (d.color === GREEN || d.color === YELLOW || (d.color === RED && d.idx < 5)));
+    circle3Dots.forEach(d => {
+      d.circleNum = 3;
+      const a = Math.atan2(d.pInit.y - CIRC_CY, d.pInit.x - CIRC_CX);
+      let da = a - a_entry3;
+      while (da <= 0.0001) da += 2 * Math.PI;
+      while (da > 2 * Math.PI) da -= 2 * Math.PI;
+      d.da = da;
+    });
+    circle3Dots.sort((a, b) => b.da - a.da);
+    circle3Dots.forEach((d, m) => {
+      d.trainIdx3 = m;
+      const c = Math.floor(m / 25); // 0..1 (колонки 1.0, 0.5)
+      const k = m % 25; // 0..24
+      d.pBox3 = getBoxPt3(colOffsets3[c], k);
+    });
+
+    // 4-й Круг (10 точек):
+    const circle4Dots = diamondDots.filter(d => d.isInnerRing && d.color === RED && d.idx >= 5);
+    circle4Dots.forEach(d => {
+      d.circleNum = 4;
+      const a = Math.atan2(d.pInit.y - CIRC_CY, d.pInit.x - CIRC_CX);
+      let da = a - a_entry4;
+      while (da <= 0.0001) da += 2 * Math.PI;
+      while (da > 2 * Math.PI) da -= 2 * Math.PI;
+      d.da = da;
+    });
+    circle4Dots.sort((a, b) => b.da - a.da);
+    circle4Dots.forEach((d, m) => {
+      d.trainIdx4 = m;
+      d.pBox4 = getBoxPt4(m);
+    });
+
+    function createCatmullRomSpline(controlPoints, numSamples = 300) {
+      const pts = [];
+      const dists = [0];
+      let totalD = 0;
+
+      function catmullRom(p0, p1, p2, p3, t) {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const x = 0.5 * (
+          (2 * p1.x) +
+          (-p0.x + p2.x) * t +
+          (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+          (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
+        );
+        const y = 0.5 * (
+          (2 * p1.y) +
+          (-p0.y + p2.y) * t +
+          (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+          (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
+        );
+        return { x, y };
+      }
+
+      const numSegments = controlPoints.length - 3;
+      const samplesPerSeg = Math.floor(numSamples / numSegments);
+
+      for (let s = 0; s < numSegments; s++) {
+        const p0 = controlPoints[s];
+        const p1 = controlPoints[s + 1];
+        const p2 = controlPoints[s + 2];
+        const p3 = controlPoints[s + 3];
+
+        const isLastSeg = (s === numSegments - 1);
+        const count = isLastSeg ? (numSamples - s * samplesPerSeg) : samplesPerSeg;
+
+        for (let i = 0; i < count; i++) {
+          const t = i / count;
+          const pt = catmullRom(p0, p1, p2, p3, t);
+          pts.push(pt);
+          if (pts.length > 1) {
+            const prev = pts[pts.length - 2];
+            totalD += Math.hypot(pt.x - prev.x, pt.y - prev.y);
+            dists.push(totalD);
+          }
+        }
+      }
+      const lastPt = controlPoints[controlPoints.length - 2];
+      pts.push(lastPt);
+      if (pts.length > 1) {
+        const prev = pts[pts.length - 2];
+        totalD += Math.hypot(lastPt.x - prev.x, lastPt.y - prev.y);
+        dists.push(totalD);
+      }
+
+      return { trackPts: pts, trackDists: dists, totalLength: totalD };
+    }
+
+    // ── Построение Единых Эталонных Траекторий (Single Master Tracks) ──────────
+    // 0. Внешняя дорожка — 1-й круг (Плавная мастер-дуга без волн от 18.0R до точки X: 1200.0px, Y: 607.3px)
+    const masterTrack1 = (() => {
+      const x0 = gx(colR(18.0));
+      const cp = [
+        { x: x0, y: yRow28 - 100 },
+        { x: x0, y: yRow28 },
+        { x: gx(colR(15.0)), y: gy(rowJ(23.0)) }, // Точка 15:23
+        { x: gx(colR(12.2)), y: gy(rowJ(19.0)) }, // Точка 12.2:19
+        { x: trackX1, y: entryY1 },               // Точка входа (1200.0, 607.3)
+        { x: trackX1 - 20, y: entryY1 + 60 },
+      ];
+      return createCatmullRomSpline(cp);
+    })();
+
+    const baseCirc1Pts = openCircPts(CIRC_CX, CIRC_CY, CIRC_R, 140, 0);
+    const circle1Dots = baseCirc1Pts.map((p, i) => {
+      const a = Math.atan2(p.y - CIRC_CY, p.x - CIRC_CX);
+      let da = a - a_entry1;
+      while (da <= 0.0001) da += 2 * Math.PI;
+      while (da > 2 * Math.PI) da -= 2 * Math.PI;
+      return {
+        idx: i,
+        pInit: p,
+        da,
+        color: BLACK_SQ,
+      };
+    });
+    const sortedCirc1 = [...circle1Dots].sort((a, b) => b.da - a.da);
+    sortedCirc1.forEach((d, m) => {
+      d.trainIdx = m;
+      const c = Math.floor(m / 35);
+      const k = m % 35;
+      d.c = c;
+      d.k = k;
+      d.pBox = {
+        x: gx(colR(colOffsets1[c])),
+        y: yRow28 - k * deltaS1,
+      };
+    });
+
+    const L_train_total1 = masterTrack1.totalLength + 140 * deltaS1;
+
+    // ── Последовательный марш 1-го круга (единой сплошной цепочкой из 140 человек) ──
+    function getCircle1EntrancePos(d, u) {
+      const m = d.trainIdx; // 0..139
+      const c = d.c; // 0..3 (колонка ожидания)
+      const k = d.k; // 0..34 (позиция в колонке)
+
+      const s_train = L_train_total1 * (u / (23.5 / 26.0));
+      const s_col_start = c * 35 * deltaS1;
+
+      if (s_train < s_col_start) return d.pBox;
+
+      const d_col = s_train - s_col_start;
+      const d_in_box = k * deltaS1;
+
+      if (d_col < d_in_box) {
+        const y = (yRow28 - d_in_box) + d_col;
+        const xBox = gx(colR(colOffsets1[c]));
+        const xMaster = gx(colR(18.0));
+        // Плавный шаг в створ ведущей колонки 18R перед 28-м рядом:
+        const distTo28 = yRow28 - y;
+        const stepFrac = Math.min(1.0, Math.max(0, 1.0 - distTo28 / (1.5 * STEP)));
+        const smooth = (1 - Math.cos(Math.PI * stepFrac)) / 2;
+        const x = xBox + (xMaster - xBox) * smooth;
+        return { x, y };
+      }
+
+      // Все 140 человек идут строго по единой мастер-дуге
+      const s_on_arc = d_col - d_in_box;
+      if (s_on_arc <= masterTrack1.totalLength) {
+        return getPointAtDist(masterTrack1.trackPts, masterTrack1.trackDists, s_on_arc);
+      }
+
+      // Движение по 1-му кругу от точки 1200.0, 607.3 по часовой стрелке снизу
+      const d_circ = s_on_arc - masterTrack1.totalLength;
+      const d_circ_target = d.da !== undefined ? (d.da * R1) : ((140 - m) * deltaS1);
+
+      if (d_circ >= d_circ_target) return d.pInit;
+
+      const a = a_entry1 + d_circ / R1;
+      return {
+        x: CIRC_CX + R1 * Math.cos(a),
+        y: CIRC_CY + R1 * Math.sin(a),
+      };
+    }
+
+    // 1. Внешняя дорожка — 2-й круг (Мастер-дуга от колонки 3.0R)
+    const masterTrack2 = (() => {
+      const x0 = gx(colR(3.0));
+      const cp = [
+        { x: x0, y: yRow27 - 100 },
+        { x: x0, y: yRow27 },
+        { x: gx(colR(8.0)), y: gy(rowJ(23.0)) }, // Точка 8:23
+        { x: gx(colR(9.0)), y: gy(rowJ(19.0)) }, // Точка 9:19
+        { x: trackX, y: entryY },                // Точка входа (1127.9, 606.7)
+        { x: trackX - 25, y: entryY + 60 },
+      ];
+      return createCatmullRomSpline(cp);
+    })();
+
+    // 2. Средняя дорожка — 3-й круг (Мастер-дуга от колонки 1.0R, ближе ко 2-му кругу)
+    const masterTrack3 = (() => {
+      const x0 = gx(colR(1.0));
+      const cp = [
+        { x: x0, y: yRow27 - 100 },
+        { x: x0, y: yRow27 },
+        { x: gx(colR(6.2)), y: gy(rowJ(23.0)) }, // Точка 6.2:23
+        { x: gx(colR(7.2)), y: gy(rowJ(19.0)) }, // Точка 7.2:19
+        { x: trackX3, y: entryY3 },              // Точка входа 4:15 (1048.0, 608.0)
+        { x: trackX3 - 25, y: entryY3 + 60 },
+      ];
+      return createCatmullRomSpline(cp);
+    })();
+
+    // 3. Внутренняя дорожка — 4-й круг (Мастер-дуга от колонки 0, плотно прилегает к 3-му кругу)
+    const masterTrack4 = (() => {
+      const x0 = CIRC_CX;
+      const cp = [
+        { x: x0, y: yRow27 - 100 },
+        { x: x0, y: yRow27 },
+        { x: gx(colR(4.5)), y: gy(rowJ(23.0)) }, // Точка 4.5:23 (плотно и близко к 3-му кругу!)
+        { x: gx(colR(5.5)), y: gy(rowJ(19.0)) }, // Точка 5.5:19
+        { x: trackX4, y: entryY4 },              // Точка входа 1:15 (976.0, 608.0)
+        { x: trackX4 - 20, y: entryY4 + 40 },
+      ];
+      return createCatmullRomSpline(cp);
+    })();
+
+    const L_train_total = masterTrack2.totalLength + 100 * deltaS;
+
+    // ── Последовательный марш 2-го круга (со смещением в строй первой колонки) ──
+    function getPerformerEntrancePos(d, u) {
+      if (d.trainIdx === undefined) return d.pInit;
+      const m = d.trainIdx; // 0..99
+      const c = Math.floor(m / 25); // 0..3 (колонка ожидания)
+      const k = m % 25; // 0..24 (позиция в колонке)
+
+      const s_train = L_train_total * (u / (23.5 / 26.0));
+      const s_col_start = c * 25 * deltaS;
+
+      if (s_train < s_col_start) return d.pBox;
+
+      const d_col = s_train - s_col_start;
+      const d_in_box = k * deltaS;
+
+      if (d_col < d_in_box) {
+        const y = (yRow27 - d_in_box) + d_col;
+        const xBox = gx(colR(colOffsets2[c]));
+        const xMaster = gx(colR(3.0));
+        // Плавный шаг в сторону ведущей линии (3.0R) перед 27 рядом:
+        const distTo27 = yRow27 - y;
+        const stepFrac = Math.min(1.0, Math.max(0, 1.0 - distTo27 / (1.5 * STEP)));
+        const smooth = (1 - Math.cos(Math.PI * stepFrac)) / 2;
+        const x = xBox + (xMaster - xBox) * smooth;
+        return { x, y };
+      }
+
+      // Все 100 человек идут строго по одной мастер-дуге с идеальным шагом deltaS
+      const s_on_arc = d_col - d_in_box;
+      if (s_on_arc <= masterTrack2.totalLength) {
+        return getPointAtDist(masterTrack2.trackPts, masterTrack2.trackDists, s_on_arc);
+      }
+
+      // Движение по 2-му кругу
+      const d_circ = s_on_arc - masterTrack2.totalLength;
+      const d_circ_target = d.da !== undefined ? (d.da * R2) : ((100 - m) * deltaS);
+
+      if (d_circ >= d_circ_target) return d.pInit;
+
+      const a = a_entry + d_circ / R2;
+      return {
+        x: CIRC_CX + R2 * Math.cos(a),
+        y: CIRC_CY + R2 * Math.sin(a),
+      };
+    }
+
+    // ── Последовательный марш 3-го круга (со смещением в строй первой колонки) ──
+    function getPerformerEntrancePosCircle3(d, u) {
+      if (d.trainIdx3 === undefined) return d.pInit;
+      const m = d.trainIdx3; // 0..49
+      const c = Math.floor(m / 25); // 0..1
+      const k = m % 25;
+
+      const s_train = L_train_total * (u / (23.5 / 26.0));
+      const s_col_start = c * 25 * deltaS3;
+
+      if (s_train < s_col_start) return d.pBox3;
+
+      const d_col = s_train - s_col_start;
+      const d_in_box = k * deltaS3;
+
+      if (d_col < d_in_box) {
+        const y = (yRow27 - d_in_box) + d_col;
+        const xBox = gx(colR(colOffsets3[c]));
+        const xMaster = gx(colR(1.0));
+        // Плавный шаг в сторону ведущей линии (1.0R) перед 27 рядом:
+        const distTo27 = yRow27 - y;
+        const stepFrac = Math.min(1.0, Math.max(0, 1.0 - distTo27 / (1.5 * STEP)));
+        const smooth = (1 - Math.cos(Math.PI * stepFrac)) / 2;
+        const x = xBox + (xMaster - xBox) * smooth;
+        return { x, y };
+      }
+
+      const s_on_arc = d_col - d_in_box;
+      if (s_on_arc <= masterTrack3.totalLength) {
+        return getPointAtDist(masterTrack3.trackPts, masterTrack3.trackDists, s_on_arc);
+      }
+
+      // Движение по 3-му кругу
+      const d_circ = s_on_arc - masterTrack3.totalLength;
+      const d_circ_target = d.da !== undefined ? (d.da * R3) : ((50 - m) * deltaS3);
+
+      if (d_circ >= d_circ_target) return d.pInit;
+
+      const a = a_entry3 + d_circ / R3;
+      return {
+        x: CIRC_CX + R3 * Math.cos(a),
+        y: CIRC_CY + R3 * Math.sin(a),
+      };
+    }
+
+    // ── Последовательный марш 4-го круга ──
+    function getPerformerEntrancePosCircle4(d, u) {
+      if (d.trainIdx4 === undefined) return d.pInit;
+      const m = d.trainIdx4; // 0..9
+
+      const s_train = L_train_total * (u / (23.5 / 26.0));
+      const d_in_box = m * deltaS4;
+
+      if (s_train < d_in_box) {
+        return { x: d.pBox4.x, y: (yRow27 - d_in_box) + s_train };
+      }
+
+      const s_on_arc = s_train - d_in_box;
+      if (s_on_arc <= masterTrack4.totalLength) {
+        return getPointAtDist(masterTrack4.trackPts, masterTrack4.trackDists, s_on_arc);
+      }
+
+      // Движение по 4-му кругу
+      const d_circ = s_on_arc - masterTrack4.totalLength;
+      const d_circ_target = d.da !== undefined ? (d.da * R4) : ((10 - m) * deltaS4);
+
+      if (d_circ >= d_circ_target) return d.pInit;
+
+      const a = a_entry4 + d_circ / R4;
+      return {
+        x: CIRC_CX + R4 * Math.cos(a),
+        y: CIRC_CY + R4 * Math.sin(a),
+      };
+    }
+
+    const RED_ROCKS = [
+      { pts: [[colL(19), rowJ(30)], [colL(17.5), rowJ(32.5)], [colL(16), rowJ(29)], [colL(18), rowJ(26)]], color: "#7F1D1D" },
+      { pts: [[colL(19), rowJ(30)], [colL(17.5), rowJ(32.5)], [colL(16), rowJ(29)]], color: "#B91C1C" },
+      { pts: [[colL(17.5), rowJ(32.5)], [colL(15), rowJ(33)], [colL(16), rowJ(29)]], color: "#DC2626" },
+      { pts: [[colL(15), rowJ(33)], [colL(13.5), rowJ(30.5)], [colL(16), rowJ(29)]], color: "#EF4444" },
+      { pts: [[colL(16), rowJ(29)], [colL(13.5), rowJ(30.5)], [colL(14.5), rowJ(26)]], color: "#B91C1C" },
+      { pts: [[colL(18), rowJ(26)], [colL(16), rowJ(29)], [colL(14.5), rowJ(26)]], color: "#991B1B" },
+      { pts: [[colL(15), rowJ(33)], [colL(12), rowJ(33.5)], [colL(13.5), rowJ(30.5)]], color: "#DC2626" },
+      { pts: [[colL(13.5), rowJ(30.5)], [colL(12), rowJ(33.5)], [colL(10.5), rowJ(31)]], color: "#F87171" },
+      { pts: [[colL(13.5), rowJ(30.5)], [colL(10.5), rowJ(31)], [colL(12), rowJ(27)]], color: "#991B1B" },
+      { pts: [[colL(14.5), rowJ(26)], [colL(13.5), rowJ(30.5)], [colL(12), rowJ(27)]], color: "#7F1D1D" },
+      { pts: [[colL(14.5), rowJ(26)], [colL(12), rowJ(27)], [colL(9.5), rowJ(27.5)]], color: "#881337" },
+      { pts: [[colL(12), rowJ(33.5)], [colL(9), rowJ(34)], [colL(10.5), rowJ(31)]], color: "#DC2626" },
+      { pts: [[colL(10.5), rowJ(31)], [colL(9), rowJ(34)], [colL(7.5), rowJ(31.5)]], color: "#EF4444" },
+      { pts: [[colL(10.5), rowJ(31)], [colL(7.5), rowJ(31.5)], [colL(9.5), rowJ(27.5)]], color: "#B91C1C" },
+      { pts: [[colL(12), rowJ(27)], [colL(10.5), rowJ(31)], [colL(9.5), rowJ(27.5)]], color: "#991B1B" },
+      { pts: [[colL(9), rowJ(34)], [colL(6.5), rowJ(34)], [colL(7.5), rowJ(31.5)]], color: "#DC2626" },
+      { pts: [[colL(7.5), rowJ(31.5)], [colL(6.5), rowJ(34)], [colL(6.5), rowJ(30)]], color: "#B91C1C" },
+      { pts: [[colL(7.5), rowJ(31.5)], [colL(6.5), rowJ(30)], [colL(9.5), rowJ(27.5)]], color: "#991B1B" },
+      { pts: [[colL(9.5), rowJ(27.5)], [colL(6.5), rowJ(30)], [colL(6.5), rowJ(28.5)]], color: "#7F1D1D" },
+      { pts: [[colL(9.5), rowJ(27.5)], [colL(6.5), rowJ(28.5)], [colL(6.5), rowJ(25.5)]], color: "#991B1B" },
+      { pts: [[colL(14.5), rowJ(26)], [colL(9.5), rowJ(27.5)], [colL(11), rowJ(24.5)]], color: "#7F1D1D" },
+    ];
+
+    const CENTER_ROCKS = [
+      { pts: [[colL(6.5), rowJ(34)], [colL(4.5), rowJ(34)], [colL(5.5), rowJ(32)]], color: "#DC2626", stroke: "#450A0A" },
+      { pts: [[colL(6.5), rowJ(34)], [colL(5.5), rowJ(32)], [colL(6.5), rowJ(30)]], color: "#B91C1C", stroke: "#450A0A" },
+      { pts: [[colL(5.5), rowJ(32)], [colL(4.5), rowJ(34)], [colL(3.5), rowJ(32.5)]], color: "#EF4444", stroke: "#450A0A" },
+      { pts: [[colL(5.5), rowJ(32)], [colL(3.5), rowJ(32.5)], [colL(4.5), rowJ(30.5)]], color: "#991B1B", stroke: "#450A0A" },
+      { pts: [[colL(5.5), rowJ(32)], [colL(6.5), rowJ(30)], [colL(4.5), rowJ(30.5)]], color: "#DC2626", stroke: "#450A0A" },
+      { pts: [[colL(4.5), rowJ(34)], [colL(2), rowJ(34)], [colL(3.5), rowJ(32.5)]], color: "#B91C1C", stroke: "#450A0A" },
+      { pts: [[colL(3.5), rowJ(32.5)], [colL(2), rowJ(34)], [colL(1.5), rowJ(32)]], color: "#EF4444", stroke: "#450A0A" },
+      { pts: [[colL(3.5), rowJ(32.5)], [colL(1.5), rowJ(32)], [colL(4.5), rowJ(30.5)]], color: "#DC2626", stroke: "#450A0A" },
+      { pts: [[colL(6.5), rowJ(30)], [colL(4.5), rowJ(30.5)], [colL(6.5), rowJ(28.5)]], color: "#991B1B", stroke: "#450A0A" },
+      { pts: [[colL(4.5), rowJ(30.5)], [colL(6.5), rowJ(28.5)], [colL(4), rowJ(28.5)]], color: "#7F1D1D", stroke: "#450A0A" },
+      { pts: [[colL(6.5), rowJ(28.5)], [colL(6.5), rowJ(25.5)], [colL(4), rowJ(27)]], color: "#991B1B", stroke: "#450A0A" },
+      { pts: [[colL(6.5), rowJ(28.5)], [colL(4), rowJ(28.5)], [colL(4), rowJ(27)]], color: "#7F1D1D", stroke: "#450A0A" },
+      { pts: [[colL(6.5), rowJ(25.5)], [colL(4), rowJ(27)], [colL(3.5), rowJ(25.8)]], color: "#B91C1C", stroke: "#450A0A" },
+      { pts: [[colL(4), rowJ(28.5)], [colL(2), rowJ(29.5)], [colL(4), rowJ(27)]], color: "#991B1B", stroke: "#450A0A" },
+
+      { pts: [[colR(2), rowJ(34)], [colR(4.5), rowJ(34)], [colR(3.5), rowJ(32.5)]], color: "#EA580C", stroke: "#7C2D12" },
+      { pts: [[colR(3.5), rowJ(32.5)], [colR(4.5), rowJ(34)], [colR(4.5), rowJ(32)]], color: "#F97316", stroke: "#7C2D12" },
+      { pts: [[colR(3.5), rowJ(32.5)], [colR(4.5), rowJ(32)], [colR(5.5), rowJ(32)]], color: "#FB923C", stroke: "#7C2D12" },
+      { pts: [[colR(3.5), rowJ(32.5)], [colR(5.5), rowJ(32)], [colR(2.5), rowJ(30.5)]], color: "#D97706", stroke: "#7C2D12" },
+      { pts: [[colR(5.5), rowJ(32)], [colR(6.5), rowJ(29)], [colR(2.5), rowJ(30.5)]], color: "#F59E0B", stroke: "#7C2D12" },
+      { pts: [[colR(2.5), rowJ(30.5)], [colR(6.5), rowJ(29)], [colR(4.5), rowJ(28.5)]], color: "#EA580C", stroke: "#7C2D12" },
+      { pts: [[colR(6.5), rowJ(29)], [colR(7.5), rowJ(26.5)], [colR(4.5), rowJ(28.5)]], color: "#C2410C", stroke: "#7C2D12" },
+
+      { pts: [[colL(2), rowJ(34)], [colL(0), rowJ(34)], [colL(1.5), rowJ(32)]], color: "#15803D", stroke: "#15803D" },
+      { pts: [[colL(1.5), rowJ(32)], [colL(0), rowJ(34)], [colL(0), rowJ(31.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(1.5), rowJ(32)], [colL(0), rowJ(31.5)], [colL(4.5), rowJ(30.5)]], color: "#16A34A", stroke: "#15803D" },
+      { pts: [[colR(0), rowJ(34)], [colR(2), rowJ(34)], [colR(1.5), rowJ(32)]], color: "#15803D", stroke: "#15803D" },
+      { pts: [[colR(0), rowJ(34)], [colR(1.5), rowJ(32)], [colR(0), rowJ(31.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(1.5), rowJ(32)], [colR(2), rowJ(34)], [colR(3.5), rowJ(32.5)]], color: "#16A34A", stroke: "#15803D" },
+      { pts: [[colR(1.5), rowJ(32)], [colR(3.5), rowJ(32.5)], [colR(2.5), rowJ(30.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(0), rowJ(31.5)], [colR(1.5), rowJ(32)], [colR(2.5), rowJ(30.5)]], color: "#15803D", stroke: "#15803D" },
+
+      { pts: [[colR(7.5), rowJ(26.5)], [colR(4.5), rowJ(28.5)], [colR(4), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+
+      { pts: [[colL(4.5), rowJ(30.5)], [colL(0), rowJ(31.5)], [colL(2), rowJ(29.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(4.5), rowJ(30.5)], [colL(2), rowJ(29.5)], [colL(4), rowJ(28.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(31.5)], [colR(2.5), rowJ(30.5)], [colL(0), rowJ(29)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(31.5)], [colL(0), rowJ(29)], [colL(2), rowJ(29.5)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2.5), rowJ(30.5)], [colR(4.5), rowJ(28.5)], [colR(2), rowJ(29)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2.5), rowJ(30.5)], [colR(2), rowJ(29)], [colL(0), rowJ(29)]], color: "#22C55E", stroke: "#15803D" },
+
+      { pts: [[colL(2), rowJ(29.5)], [colL(0), rowJ(29)], [colL(2), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(2), rowJ(29.5)], [colL(4), rowJ(27)], [colL(2), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(4), rowJ(27)], [colL(2), rowJ(27)], [colL(3.5), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(2), rowJ(27)], [colL(1.8), rowJ(25.8)], [colL(3.5), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(29)], [colL(2), rowJ(27)], [colL(1.8), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(29)], [colL(1.8), rowJ(25.8)], [colR(1.8), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(29)], [colR(1.8), rowJ(25.8)], [colR(2), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colL(0), rowJ(29)], [colR(2), rowJ(27)], [colR(2), rowJ(29)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2), rowJ(29)], [colR(4.5), rowJ(28.5)], [colR(4), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2), rowJ(29)], [colR(4), rowJ(27)], [colR(2), rowJ(27)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2), rowJ(27)], [colR(4), rowJ(27)], [colR(3.5), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(2), rowJ(27)], [colR(3.5), rowJ(25.8)], [colR(1.8), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(7.5), rowJ(26.5)], [colR(4), rowJ(27)], [colR(5.5), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+      { pts: [[colR(4), rowJ(27)], [colR(3.5), rowJ(25.8)], [colR(5.5), rowJ(25.8)]], color: "#22C55E", stroke: "#15803D" },
+    ];
+
+    const ORANGE_ROCKS = [
+      { pts: [[colR(4.5), rowJ(34)], [colR(7), rowJ(34)], [colR(5.5), rowJ(32)]], color: "#EA580C" },
+      { pts: [[colR(5.5), rowJ(32)], [colR(7), rowJ(34)], [colR(7.5), rowJ(31.5)]], color: "#F97316" },
+      { pts: [[colR(4.5), rowJ(34)], [colR(5.5), rowJ(32)], [colR(4.5), rowJ(32)]], color: "#C2410C" },
+      { pts: [[colR(7), rowJ(34)], [colR(9.5), rowJ(33.5)], [colR(7.5), rowJ(31.5)]], color: "#FB923C" },
+      { pts: [[colR(7.5), rowJ(31.5)], [colR(9.5), rowJ(33.5)], [colR(10), rowJ(31)]], color: "#F59E0B" },
+      { pts: [[colR(5.5), rowJ(32)], [colR(7.5), rowJ(31.5)], [colR(6.5), rowJ(29)]], color: "#D97706" },
+      { pts: [[colR(7.5), rowJ(31.5)], [colR(10), rowJ(31)], [colR(9), rowJ(28.5)]], color: "#F59E0B" },
+      { pts: [[colR(6.5), rowJ(29)], [colR(7.5), rowJ(31.5)], [colR(9), rowJ(28.5)]], color: "#B45309" },
+      { pts: [[colR(6.5), rowJ(29)], [colR(9), rowJ(28.5)], [colR(7.5), rowJ(26.5)]], color: "#C2410C" },
+      { pts: [[colR(9.5), rowJ(33.5)], [colR(12.5), rowJ(33)], [colR(10), rowJ(31)]], color: "#EA580C" },
+      { pts: [[colR(10), rowJ(31)], [colR(12.5), rowJ(33)], [colR(12), rowJ(30)]], color: "#F97316" },
+      { pts: [[colR(10), rowJ(31)], [colR(12), rowJ(30)], [colR(9), rowJ(28.5)]], color: "#D97706" },
+      { pts: [[colR(9), rowJ(28.5)], [colR(12), rowJ(30)], [colR(11.5), rowJ(27)]], color: "#B45309" },
+      { pts: [[colR(12.5), rowJ(33)], [colR(15), rowJ(32)], [colR(12), rowJ(30)]], color: "#DC2626" },
+      { pts: [[colR(12), rowJ(30)], [colR(15), rowJ(32)], [colR(14.5), rowJ(29)]], color: "#EA580C" },
+      { pts: [[colR(12), rowJ(30)], [colR(14.5), rowJ(29)], [colR(11.5), rowJ(27)]], color: "#C2410C" },
+      { pts: [[colR(15), rowJ(32)], [colR(17), rowJ(30)], [colR(14.5), rowJ(29)]], color: "#B91C1C" },
+      { pts: [[colR(14.5), rowJ(29)], [colR(17), rowJ(30)], [colR(16), rowJ(27)]], color: "#991B1B" },
+      { pts: [[colR(11.5), rowJ(27)], [colR(14.5), rowJ(29)], [colR(16), rowJ(27)]], color: "#7F1D1D" },
+    ];
+
+    // ── Diagonal Lines Definition: State 1 (3 Lines) & State 2 (2 Lines) ─────────
+    // Left endpoints
+    const L1_S = { x: gx(colL(25)), y: gy(rowJ(3)) }, L1_E = { x: gx(colL(11)), y: gy(rowJ(18)) };
+    const L2_S = { x: gx(colL(26)), y: gy(rowJ(3.5)) }, L2_E = { x: gx(colL(12)), y: gy(rowJ(18.5)) };
+    const L3_S = { x: gx(colL(27)), y: gy(rowJ(4)) }, L3_E = { x: gx(colL(14)), y: gy(rowJ(18)) };
+
+    // Right endpoints (mirrored)
+    const R1_S = { x: gx(colR(25)), y: gy(rowJ(3)) }, R1_E = { x: gx(colR(11)), y: gy(rowJ(18)) };
+    const R2_S = { x: gx(colR(26)), y: gy(rowJ(3.5)) }, R2_E = { x: gx(colR(12)), y: gy(rowJ(18.5)) };
+    const R3_S = { x: gx(colR(27)), y: gy(rowJ(4)) }, R3_E = { x: gx(colR(14)), y: gy(rowJ(18)) };
+
+    // State 1: 35 dots on L1, 15 top dots on L2, 30 dots on L3, 20 bottom dots on L2
+    const L1_pts_35 = linePts(L1_S, L1_E, 35);
+    const L2_pts_35 = linePts(L2_S, L2_E, 35);
+    const L3_pts_30 = linePts(L3_S, L3_E, 30);
+
+    const R1_pts_35 = linePts(R1_S, R1_E, 35);
+    const R2_pts_35 = linePts(R2_S, R2_E, 35);
+    const R3_pts_30 = linePts(R3_S, R3_E, 30);
+
+    // State 2: 50 dots on L1, 50 dots on L2 (30 purple at top, 20 black below), 0 on L3
+    const L1_pts_50 = linePts(L1_S, L1_E, 50);
+    const L2_pts_50 = linePts(L2_S, L2_E, 50);
+
+    const R1_pts_50 = linePts(R1_S, R1_E, 50);
+    const R2_pts_50 = linePts(R2_S, R2_E, 50);
+
+    // ── State 0 (3 Arcs / Semi-circles in Drawing 0):
+    // 1-й полукруг: 4:3.8 -> 11:16 (35 dots)
+    // 2-я линия/полукруг: 8:4 -> 13:16 (35 dots)
+    // 3-я линия/полукруг: 11:4.2 -> 15:15 (30 dots)
+    function createArcPoints(colStart, rowStart, colEnd, rowEnd, n, isRight) {
+      const pStart = {
+        x: isRight ? gx(colR(colStart)) : gx(colL(colStart)),
+        y: gy(rowJ(rowStart)),
+      };
+      const pEnd = {
+        x: isRight ? gx(colR(colEnd)) : gx(colL(colEnd)),
+y: gy(rowJ(rowEnd)),
+      };
+
+      const dxS = pStart.x - CIRC_CX;
+      const dyS = pStart.y - CIRC_CY;
+      const dxE = pEnd.x - CIRC_CX;
+      const dyE = pEnd.y - CIRC_CY;
+
+      let aS = Math.atan2(dyS, dxS);
+      let aE = Math.atan2(dyE, dxE);
+
+      if (!isRight) {
+        if (aE < 0) aE += 2 * Math.PI;
+      } else {
+        if (aS < 0) aS += 2 * Math.PI;
+      }
+
+      const rS = Math.hypot(dxS, dyS);
+      const rE = Math.hypot(dxE, dyE);
+
+      return Array.from({ length: n }, (_, i) => {
+        const u = i / (n - 1);
+        const a = aS + (aE - aS) * u;
+        const r = rS + (rE - rS) * u;
+        return {
+          x: CIRC_CX + r * Math.cos(a),
+          y: CIRC_CY + r * Math.sin(a),
+        };
+      });
+    }
+
+    const Arc1_L_35 = createArcPoints(4, 3.8, 12, 16, 35, false);
+    const Arc2_L_35 = createArcPoints(8, 4.0, 14, 16, 35, false);
+    const Arc3_L_30 = createArcPoints(11, 4.2, 16, 15, 30, false);
+
+    const Arc1_R_35 = createArcPoints(4, 3.8, 12, 16, 35, true);
+    const Arc2_R_35 = createArcPoints(8, 4.0, 14, 16, 35, true);
+    const Arc3_R_30 = createArcPoints(11, 4.2, 16, 15, 30, true);
+
+    // ── Исходные входные линии в верхних углах поля ──────────────────────────────
+    // 1-я линия (35 точек): 18:27 -> 27:36, марширует прямо до 12:16, затем полукруг
+    // 2-я линия (35 точек): 19:27 -> 28:36, марширует прямо до 14:16, затем полукруг
+    // 3-я линия (30 точек): 20:27 -> 28:35, марширует прямо до 16:15, затем полукруг
+    function getEntranceLinePoint(lineNum, dotIdx, N, isRight, u) {
+      let startCol, startRow, midCol, midRow, arcPts;
+      if (lineNum === 1) {
+        startCol = 27; startRow = 36;
+        midCol = 18;   midRow = 27;
+        arcPts = isRight ? Arc1_R_35 : Arc1_L_35;
+      } else if (lineNum === 2) {
+        startCol = 28; startRow = 36;
+        midCol = 19;   midRow = 27;
+        arcPts = isRight ? Arc2_R_35 : Arc2_L_35;
+      } else {
+        startCol = 28; startRow = 35;
+        midCol = 20;   midRow = 27;
+        arcPts = isRight ? Arc3_R_30 : Arc3_L_30;
+      }
+
+      const B = { x: gx(isRight ? colR(startCol) : colL(startCol)), y: gy(rowJ(startRow)) };
+      const A = { x: gx(isRight ? colR(midCol) : colL(midCol)), y: gy(rowJ(midRow)) };
+      const E = arcPts[arcPts.length - 1]; // Верхний анкер дуги
+
+      const L_straight = Math.hypot(E.x - B.x, E.y - B.y);
+      const L_BA = Math.hypot(A.x - B.x, A.y - B.y);
+
+      const N_pts = arcPts.length;
+      let L_arc = 0;
+      const distFromTopArr = new Array(N_pts);
+      distFromTopArr[N_pts - 1] = 0;
+      for (let k = N_pts - 2; k >= 0; k--) {
+        const d = Math.hypot(arcPts[k].x - arcPts[k+1].x, arcPts[k].y - arcPts[k+1].y);
+        L_arc += d;
+        distFromTopArr[k] = L_arc;
+      }
+
+      const fracInit = dotIdx / (N - 1);
+      const s0 = L_BA * (1 - fracInit);
+      const s1 = L_straight + distFromTopArr[dotIdx];
+
+      // Линейный ход u: постоянная строевая скорость без разгона и замедления
+      const sProgress = Math.max(0, Math.min(1, u));
+      const curS = s0 + (s1 - s0) * sProgress;
+
+      if (curS <= L_straight) {
+        const ratio = L_straight === 0 ? 0 : curS / L_straight;
+        return {
+          x: B.x + (E.x - B.x) * ratio,
+          y: B.y + (E.y - B.y) * ratio,
+        };
+      } else {
+        const dArc = curS - L_straight;
+        const targetD = Math.max(0, Math.min(L_arc, dArc));
+        for (let k = N_pts - 2; k >= 0; k--) {
+          if (targetD <= distFromTopArr[k]) {
+            const dStart = distFromTopArr[k+1];
+            const dEnd = distFromTopArr[k];
+            const segLen = dEnd - dStart;
+            const frac = segLen === 0 ? 0 : (targetD - dStart) / segLen;
+            return {
+              x: arcPts[k+1].x + (arcPts[k].x - arcPts[k+1].x) * frac,
+              y: arcPts[k+1].y + (arcPts[k].y - arcPts[k+1].y) * frac,
+            };
+          }
+        }
+        return arcPts[0];
+      }
+    }
+
+    // Helper to compute p3 for left and right diagonal performers (2:50..3:05 -> 3:05+)
+    function getDiagP3(isRight, lineType, m) {
+      const colFn = isRight ? colR : colL;
+      if (lineType === 1) {
+        // Line 1 (inner):
+        if (m < 10) {
+          // Внутренняя закрывающая линия наушника: 11:7 -> 11:2 (10 точек)
+          const c = 11.0;
+          const r = 7.0 - (7.0 - 2.0) * (m / 9);
+          return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: true, closingIdx: m, isOuterClosing: false };
+        } else {
+          // Подключенная внутренняя диагональ: 15:7 -> 25:3 (40 точек)
+          const k = m - 10;
+          const c = 15.0 + (25.0 - 15.0) * (k / 39);
+          const r = 7.0 - (7.0 - 3.0) * (k / 39);
+          return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: false, diagIdx: k };
+        }
+      } else {
+        // Line 2 (outer):
+        if (m < 10) {
+          // Внешняя закрывающая линия наушника: 10.5:7 -> 10.5:2 (10 точек)
+          const c = 10.5;
+          const r = 7.0 - (7.0 - 2.0) * (m / 9);
+          return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: true, closingIdx: m, isOuterClosing: true };
+        } else {
+          // Подключенная внешняя диагональ: 15.5:6.8 -> 26:3.5 (40 точек)
+          const k = m - 10;
+          const c = 15.5 + (26.0 - 15.5) * (k / 39);
+          const r = 6.8 - (6.8 - 3.5) * (k / 39);
+          return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: false, diagIdx: k };
+        }
+      }
+    }
+
+    function makeDiagTrack(pStart, pEnd, isClosing, isOuter, isRight) {
+      const dx = pEnd.x - pStart.x;
+      const dy = pEnd.y - pStart.y;
+
+      let cp1, cp2;
+      if (isClosing) {
+        if (isOuter) {
+          // Внешняя часть сначала идет вперед, затем поворачивается как дуга параллельно внутренней
+          const outX = isRight ? 16 : -16;
+          cp1 = { x: pStart.x + dx * 0.35 + outX, y: pStart.y + dy * 0.3 };
+          cp2 = { x: pEnd.x - dx * 0.25 + outX * 0.5, y: pEnd.y - 12 };
+        } else {
+          // Внутренняя закрывающая линия
+          const outX = isRight ? 8 : -8;
+          cp1 = { x: pStart.x + dx * 0.35 + outX, y: pStart.y + dy * 0.3 };
+          cp2 = { x: pEnd.x - dx * 0.25 + outX * 0.5, y: pEnd.y - 10 };
+        }
+      } else {
+        // Скольжение вперед вдоль диагональной линии
+        cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
+        cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
+      }
+
+      const pts = [];
+      const N = 40;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const v = 1 - t;
+        const x = v*v*v*pStart.x + 3*v*v*t*cp1.x + 3*v*t*t*cp2.x + t*t*t*pEnd.x;
+        const y = v*v*v*pStart.y + 3*v*v*t*cp1.y + 3*v*t*t*cp2.y + t*t*t*pEnd.y;
+        pts.push({ x, y });
+      }
+
+      const dists = [0];
+      for (let i = 1; i < pts.length; i++) {
+        dists.push(dists[i-1] + Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y));
+      }
+
+      return { pts, dists, totalLen: dists[dists.length - 1] };
+    }
+
+    // Build 100 dot descriptors for left and right side
+    const dotsLeft = [];
+    const dotsRight = [];
+
+    // 1. Top 15 dots from Line 1
+    for (let i = 0; i < 15; i++) {
+      const m = 2 * i;
+      const p3L = getDiagP3(false, 1, m);
+      const p3R = getDiagP3(true, 1, m);
+      const p2L = L1_pts_50[m];
+      const p2R = R1_pts_50[m];
+      const trL = makeDiagTrack(p2L, p3L, p3L.isClosing, p3L.isOuterClosing, false);
+      const trR = makeDiagTrack(p2R, p3R, p3R.isClosing, p3R.isOuterClosing, true);
+
+      dotsLeft.push({
+        lineNum: 1, lineDotIdx: i, lineTotal: 35,
+        p0: Arc1_L_35[i],
+        p1: L1_pts_35[i],
+        p2: p2L,
+        p3: p3L,
+        trackPts: trL.pts,
+        trackDists: trL.dists,
+        totalLen: trL.totalLen,
+        color: BLACK_SQ,
+        type: 'L1_top',
+        idx: i,
+        total: 15,
+      });
+      dotsRight.push({
+        lineNum: 1, lineDotIdx: i, lineTotal: 35,
+        p0: Arc1_R_35[i],
+        p1: R1_pts_35[i],
+        p2: p2R,
+        p3: p3R,
+        trackPts: trR.pts,
+        trackDists: trR.dists,
+        totalLen: trR.totalLen,
+        color: BLACK_SQ,
+        type: 'L1_top',
+        idx: i,
+        total: 15,
+      });
+    }
+
+    // 2. Top 15 dots from Line 2
+    for (let i = 0; i < 15; i++) {
+      const m = 2 * i + 1;
+      const p3L = getDiagP3(false, 1, m);
+      const p3R = getDiagP3(true, 1, m);
+      const p2L = L1_pts_50[m];
+      const p2R = R1_pts_50[m];
+      const trL = makeDiagTrack(p2L, p3L, p3L.isClosing, p3L.isOuterClosing, false);
+      const trR = makeDiagTrack(p2R, p3R, p3R.isClosing, p3R.isOuterClosing, true);
+
+      dotsLeft.push({
+        lineNum: 2, lineDotIdx: i, lineTotal: 35,
+        p0: Arc2_L_35[i],
+        p1: L2_pts_35[i],
+        p2: p2L,
+        p3: p3L,
+        trackPts: trL.pts,
+        trackDists: trL.dists,
+        totalLen: trL.totalLen,
+        color: BLACK_SQ,
+        type: 'L2_cross',
+        idx: i,
+        total: 15,
+      });
+      dotsRight.push({
+        lineNum: 2, lineDotIdx: i, lineTotal: 35,
+        p0: Arc2_R_35[i],
+        p1: R2_pts_35[i],
+        p2: p2R,
+        p3: p3R,
+        trackPts: trR.pts,
+        trackDists: trR.dists,
+        totalLen: trR.totalLen,
+        color: BLACK_SQ,
+        type: 'L2_cross',
+        idx: i,
+        total: 15,
+      });
+    }
+
+    // 3. Bottom 20 dots from Line 1
+    for (let i = 0; i < 20; i++) {
+      const m = 30 + i;
+      const p3L = getDiagP3(false, 1, m);
+      const p3R = getDiagP3(true, 1, m);
+      const p2L = L1_pts_50[m];
+      const p2R = R1_pts_50[m];
+      const trL = makeDiagTrack(p2L, p3L, p3L.isClosing, p3L.isOuterClosing, false);
+      const trR = makeDiagTrack(p2R, p3R, p3R.isClosing, p3R.isOuterClosing, true);
+
+      dotsLeft.push({
+        lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+        p0: Arc1_L_35[15 + i],
+        p1: L1_pts_35[15 + i],
+        p2: p2L,
+        p3: p3L,
+        trackPts: trL.pts,
+        trackDists: trL.dists,
+        totalLen: trL.totalLen,
+        color: BLACK_SQ,
+        type: 'L1_bot',
+        idx: i,
+        total: 20,
+      });
+      dotsRight.push({
+        lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+        p0: Arc1_R_35[15 + i],
+        p1: R1_pts_35[15 + i],
+        p2: p2R,
+        p3: p3R,
+        trackPts: trR.pts,
+        trackDists: trR.dists,
+        totalLen: trR.totalLen,
+        color: BLACK_SQ,
+        type: 'L1_bot',
+        idx: i,
+        total: 20,
+      });
+    }
+
+    // 4. 30 purple dots from Line 3
+    for (let i = 0; i < 30; i++) {
+      const m = i;
+      const p3L = getDiagP3(false, 2, m);
+      const p3R = getDiagP3(true, 2, m);
+      const p2L = L2_pts_50[m];
+      const p2R = R2_pts_50[m];
+      const trL = makeDiagTrack(p2L, p3L, p3L.isClosing, p3L.isOuterClosing, false);
+      const trR = makeDiagTrack(p2R, p3R, p3R.isClosing, p3R.isOuterClosing, true);
+
+      dotsLeft.push({
+        lineNum: 3, lineDotIdx: i, lineTotal: 30,
+        p0: Arc3_L_30[i],
+        p1: L3_pts_30[i],
+        p2: p2L,
+        p3: p3L,
+        trackPts: trL.pts,
+        trackDists: trL.dists,
+        totalLen: trL.totalLen,
+        color: PURPLE,
+        type: 'L3_march',
+        idx: i,
+        total: 30,
+      });
+      dotsRight.push({
+        lineNum: 3, lineDotIdx: i, lineTotal: 30,
+        p0: Arc3_R_30[i],
+        p1: R3_pts_30[i],
+        p2: p2R,
+        p3: p3R,
+        trackPts: trR.pts,
+        trackDists: trR.dists,
+        totalLen: trR.totalLen,
+        color: PURPLE,
+        type: 'L3_march',
+        idx: i,
+        total: 30,
+      });
+    }
+
+    // 5. Bottom 20 black dots from Line 2
+    for (let i = 0; i < 20; i++) {
+      const m = 30 + i;
+      const p3L = getDiagP3(false, 2, m);
+      const p3R = getDiagP3(true, 2, m);
+      const p2L = L2_pts_50[m];
+      const p2R = R2_pts_50[m];
+      const trL = makeDiagTrack(p2L, p3L, p3L.isClosing, p3L.isOuterClosing, false);
+      const trR = makeDiagTrack(p2R, p3R, p3R.isClosing, p3R.isOuterClosing, true);
+
+      dotsLeft.push({
+        lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+        p0: Arc2_L_35[15 + i],
+        p1: L2_pts_35[15 + i],
+        p2: p2L,
+        p3: p3L,
+        trackPts: trL.pts,
+        trackDists: trL.dists,
+        totalLen: trL.totalLen,
+        color: BLACK_SQ,
+        type: 'L2_bot',
+        idx: i,
+        total: 20,
+      });
+      dotsRight.push({
+        lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+        p0: Arc2_R_35[15 + i],
+        p1: R2_pts_35[15 + i],
+        p2: p2R,
+        p3: p3R,
+        trackPts: trR.pts,
+        trackDists: trR.dists,
+        totalLen: trR.totalLen,
+        color: BLACK_SQ,
+        type: 'L2_bot',
+        idx: i,
+        total: 20,
+      });
+    }
+
+    // ── Build Base SVG Markup ───────────────────────────────────────────────────
+    let svgHtml = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" preserveAspectRatio="xMidYMid meet">
+      <rect width="${SVG_W}" height="${SVG_H}" fill="#000000" />
+      <rect x="${FX}" y="${FY}" width="${FIELD_W}" height="${FIELD_H}" fill="#f3f0f7" stroke="black" stroke-width="1" />
+
+      <g id="stage-backdrop">
+        ${RED_ROCKS.map(f => `<polygon points="${f.pts.map(([c, r]) => `${gx(c)},${gy(r)}`).join(" ")}" fill="${f.color}" stroke="#450A0A" stroke-width="0.7" />`).join("")}
+        ${CENTER_ROCKS.map(f => `<polygon points="${f.pts.map(([c, r]) => `${gx(c)},${gy(r)}`).join(" ")}" fill="${f.color}" stroke="${f.stroke}" stroke-width="0.8" />`).join("")}
+        ${ORANGE_ROCKS.map(f => `<polygon points="${f.pts.map(([c, r]) => `${gx(c)},${gy(r)}`).join(" ")}" fill="${f.color}" stroke="#7C2D12" stroke-width="0.7" />`).join("")}
+
+        <rect x="${gx(colL(6.5))}" y="${gy(rowJ(37))}" width="${13 * STEP}" height="${0.7 * STEP}" fill="#8D5B4C" stroke="#5C3326" stroke-width="1.5" />
+        <rect x="${gx(colL(6.5))}" y="${gy(rowJ(37))}" width="${1.2 * STEP}" height="${3.5 * STEP}" fill="#8D5B4C" stroke="#5C3326" stroke-width="1.5" />
+        <rect x="${gx(colR(5.3))}" y="${gy(rowJ(37))}" width="${1.2 * STEP}" height="${3.5 * STEP}" fill="#8D5B4C" stroke="#5C3326" stroke-width="1.5" />
+        <polygon points="${gx(colL(4.5))},${gy(rowJ(37))} ${gx(colL(3.5))},${gy(rowJ(38.2))} ${gx(colR(3.5))},${gy(rowJ(38.2))} ${gx(colR(4.5))},${gy(rowJ(37))}" fill="#744436" stroke="#5C3326" stroke-width="1.5" />
+
+        <polygon points="${gx(colL(6.5))},${gy(rowJ(33))} ${gx(colL(6.5))},${gy(rowJ(36))} ${gx(colL(17))},${gy(rowJ(37.5))} ${gx(colL(17))},${gy(rowJ(34.5))}" fill="#1E3A8A" stroke="#172554" stroke-width="1.5" />
+        <polygon points="${gx(colL(17))},${gy(rowJ(34.5))} ${gx(colL(17))},${gy(rowJ(37.5))} ${gx(colL(17.6))},${gy(rowJ(38.5))} ${gx(colL(17.6))},${gy(rowJ(35.5))}" fill="#172554" stroke="#0F172A" stroke-width="1" />
+        ${[34.8, 35.5, 36.2, 36.9].map(lvl => `<line x1="${gx(colL(6.5))}" y1="${gy(rowJ(lvl - 1.2))}" x2="${gx(colL(17))}" y2="${gy(rowJ(lvl))}" stroke="#3B82F6" stroke-width="0.8" opacity="0.6" />`).join("")}
+
+        <polygon points="${gx(colR(6.5))},${gy(rowJ(33))} ${gx(colR(6.5))},${gy(rowJ(36))} ${gx(colR(17))},${gy(rowJ(37.5))} ${gx(colR(17))},${gy(rowJ(34.5))}" fill="#1E3A8A" stroke="#172554" stroke-width="1.5" />
+        <polygon points="${gx(colR(17))},${gy(rowJ(34.5))} ${gx(colR(17))},${gy(rowJ(37.5))} ${gx(colR(17.6))},${gy(rowJ(38.5))} ${gx(colR(17.6))},${gy(rowJ(35.5))}" fill="#172554" stroke="#0F172A" stroke-width="1" />
+        ${[34.8, 35.5, 36.2, 36.9].map(lvl => `<line x1="${gx(colR(6.5))}" y1="${gy(rowJ(lvl - 1.2))}" x2="${gx(colR(17))}" y2="${gy(rowJ(lvl))}" stroke="#3B82F6" stroke-width="0.8" opacity="0.6" />`).join("")}
+
+        <rect x="${gx(colL(6.5))}" y="${gy(rowJ(35.5))}" width="${13 * STEP}" height="${2.5 * STEP}" fill="#9333EA" stroke="#581C87" stroke-width="2" />
+        ${[35.0, 34.5, 34.0, 33.5].map(lvl => `<line x1="${gx(colL(6.5))}" y1="${gy(rowJ(lvl))}" x2="${gx(colR(6.5))}" y2="${gy(rowJ(lvl))}" stroke="#A855F7" stroke-width="1" opacity="0.5" />`).join("")}
+      </g>
+
+      <circle cx="${CIRC_CX}" cy="${CIRC_CY}" r="${4 * STEP}" fill="#DDD8C0" stroke="black" stroke-width="1.5" />
+      <circle cx="${CIRC_CX}" cy="${CIRC_CY}" r="${0.5 * STEP}" fill="white" stroke="black" stroke-width="1" />`;
+
+    for (let j = 0; j <= ROWS; j++) {
+      for (let i = 0; i <= COLS; i++) {
+        svgHtml += `<circle cx="${FX + i * STEP}" cy="${FY + j * STEP}" r="${DOT_R}" fill="${DOT_COLOR}" />`;
+      }
+    }
+    svgHtml += `<polygon points="${polyStr(RT, RR, RB, RL)}" fill="none" stroke="#aaa" stroke-width="0.5" stroke-dasharray="3 2" opacity="0.2" />`;
+    svgHtml += `<polygon points="${polyStr(LT, LR, LB, LL)}" fill="none" stroke="#aaa" stroke-width="0.5" stroke-dasharray="3 2" opacity="0.2" />`;
+    svgHtml += `<g id="diamond-layer"></g><g id="circle-layer"></g><g id="diag-layer"></g><g id="selection-layer"></g>`;
+    const textStyle = `font-size="${FONT_SIZE}" fill="${TEXT_COLOR}" font-family="${FONT}" dominant-baseline="middle" text-anchor="middle"`;
+    for (let i = 0; i <= COLS; i++) {
+      svgHtml += `<text x="${FX + i * STEP}" y="${BY + LABEL_PAD / 2}" ${textStyle}>${Math.abs(i - COLS / 2)}</text>`;
+      svgHtml += `<text x="${FX + i * STEP}" y="${FY + FIELD_H + LABEL_PAD / 2}" ${textStyle}>${Math.abs(i - COLS / 2)}</text>`;
+    }
+    for (let j = 0; j < ROWS; j++) {
+      svgHtml += `<text x="${BX + LABEL_PAD / 2}" y="${FY + j * STEP}" ${textStyle}>${ROWS - j}</text>`;
+      svgHtml += `<text x="${FX + FIELD_W + LABEL_PAD / 2}" y="${FY + j * STEP}" ${textStyle}>${ROWS - j}</text>`;
+    }
+    svgHtml += `</svg>`;
+    document.getElementById('svg-container').innerHTML = svgHtml;
+
+    // ── Coordinate Converter & Name Helpers ─────────────────────────────────────
+    function getColorName(hex) {
+      if (!hex) return "Черный";
+      const h = hex.toLowerCase();
+      if (h === '#dc2626' || h === '#ef4444' || h === '#b91c1c' || h === '#991b1b' || h === '#7f1d1d') return 'Красный';
+      if (h === '#ea580c' || h === '#f97316' || h === '#fb923c' || h === '#d97706') return 'Оранжевый';
+      if (h === '#16a34a' || h === '#22c55e' || h === '#15803d') return 'Зеленый';
+      if (h === '#f472b6' || h === '#e2e8f0') return 'Розово-серый';
+      if (h === '#eab308' || h === '#f59e0b') return 'Желтый / Оранжевый';
+      if (h === '#9333ea' || h === '#a855f7' || h === '#c084fc') return 'Фиолетовый';
+      if (h === '#3b82f6' || h === '#60a5fa' || h === '#1d4ed8') return 'Синий';
+      return 'Черный';
+    }
+
+    function getFieldGridCoords(x, y) {
+      const colFloat = (x - FX) / STEP - (COLS / 2);
+      let colStr = "";
+      if (Math.abs(colFloat) < 0.05) {
+        colStr = "0 (Центр)";
+      } else if (colFloat > 0) {
+        colStr = colFloat.toFixed(1).replace(/\.0$/, '') + "R (справа)";
+      } else {
+        colStr = Math.abs(colFloat).toFixed(1).replace(/\.0$/, '') + "L (слева)";
+      }
+
+      const rowFloat = (FY + ROWS * STEP - y) / STEP;
+      const rowStr = rowFloat.toFixed(1).replace(/\.0$/, '');
+
+      return {
+        colStr,
+        rowStr,
+        svgX: x.toFixed(1),
+        svgY: y.toFixed(1),
+      };
+    }
+
+    // ── Dot Selection State ─────────────────────────────────────────────────────
+    let selectedDotInfo = null;
+
+    function selectDot(group, idx) {
+      selectedDotInfo = { group, idx };
+      updateSelectionRing();
+    }
+
+    function getCircleTransitionPt(pA, pB, u) {
+      const s = easeInOutCubic(u);
+      const dx0 = pA.x - CIRC_CX;
+      const dy0 = pA.y - CIRC_CY;
+      const dx1 = pB.x - CIRC_CX;
+      const dy1 = pB.y - CIRC_CY;
+      const r0 = Math.hypot(dx0, dy0);
+      const r1 = Math.hypot(dx1, dy1);
+      let a0 = Math.atan2(dy0, dx0);
+      let a1 = Math.atan2(dy1, dx1);
+      let da = a1 - a0;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      const r = r0 + (r1 - r0) * s;
+      const a = a0 + da * s;
+      return {
+        x: CIRC_CX + r * Math.cos(a),
+        y: CIRC_CY + r * Math.sin(a),
+      };
+    }
+
+    function renderDiamonds(t) {
+      const tSec = t * 106.0;
+      let html = '';
+      currentPositions.diamond = [];
+
+      diamondDots.forEach((d, i) => {
+        let x, y;
+        if (tSec <= 26.0) {
+          // 0..26s (26s): Синхронный марш по кругам
+          const u = tSec / 26.0;
+          if (d.circleNum === 2) {
+            const p = getPerformerEntrancePos(d, u);
+            x = p.x;
+            y = p.y;
+          } else if (d.circleNum === 3) {
+            const p = getPerformerEntrancePosCircle3(d, u);
+            x = p.x;
+            y = p.y;
+          } else if (d.circleNum === 4) {
+            const p = getPerformerEntrancePosCircle4(d, u);
+            x = p.x;
+            y = p.y;
+          } else {
+            x = d.pInit.x;
+            y = d.pInit.y;
+          }
+        } else if (tSec <= 76.0) {
+          // 26..76s (50s): Стоят в 4-х кругах
+          x = d.pInit.x;
+          y = d.pInit.y;
+        } else if (tSec < 82.0) {
+          // 76..82s (6s): Идеальный переход из 4-х кругов в 2 круга / 3 дуги
+          const u = (tSec - 76.0) / 6.0;
+          if (d.isInnerRing && d.color === PINK_GRAY) {
+            const sFast = easeInOutCubic(Math.min(1, u / 0.40));
+            const dx0 = d.pInit.x - CIRC_CX;
+            const dy0 = d.pInit.y - CIRC_CY;
+            const dx1 = d.p0.x - CIRC_CX;
+            const dy1 = d.p0.y - CIRC_CY;
+            const r0 = Math.hypot(dx0, dy0);
+            const r1 = Math.hypot(dx1, dy1);
+            let a0 = Math.atan2(dy0, dx0);
+            let a1 = Math.atan2(dy1, dx1);
+            let da = a1 - a0;
+            while (da > Math.PI) da -= 2 * Math.PI;
+            while (da < -Math.PI) da += 2 * Math.PI;
+            const r = r0 + (r1 - r0) * sFast;
+            const a = a0 + da * sFast;
+            x = CIRC_CX + r * Math.cos(a);
+            y = CIRC_CY + r * Math.sin(a);
+          } else {
+            const p = getCircleTransitionPt(d.pInit, d.p0, u);
+            x = p.x;
+            y = p.y;
+          }
+        } else if (tSec < 106.0) {
+          const diamondT = (tSec - 82.0) / 24.0;
+          const curDist = d.s0 + (d.s1 - d.s0) * diamondT;
+          const p = getPointAtDist(d.trackPts, d.trackDists, curDist);
+          x = p.x;
+          y = p.y;
+        } else {
+          x = d.p1.x;
+          y = d.p1.y;
+        }
+
+        currentPositions.diamond[i] = { x, y, dot: d };
+        html += `<circle class="interactive-dot" onclick="onDotClick(event, 'diamond', ${i})" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${R_D}" fill="${d.color}" />`;
+      });
+      diamondLayer.innerHTML = html;
+    }
+
+    function closeDotCard() {
+      selectedDotInfo = null;
+      document.getElementById('dot-info-card').style.display = 'none';
+      const selLayer = document.getElementById('selection-layer');
+      if (selLayer) selLayer.innerHTML = '';
+    }
+
+    function onDotClick(event, group, idx) {
+      event.stopPropagation();
+      selectDot(group, idx);
+    }
+
+    function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+    function getPathPos(P0, P1, P2, P3, d) {
+      const L_3 = Math.hypot(P1.x - P0.x, P1.y - P0.y);
+      const L_turn = Math.hypot(P2.x - P1.x, P2.y - P1.y);
+      const L_2 = Math.hypot(P3.x - P2.x, P3.y - P2.y);
+      if (d <= L_3) {
+        const ratio = L_3 === 0 ? 0 : d / L_3;
+        return { x: P0.x + (P1.x - P0.x) * ratio, y: P0.y + (P1.y - P0.y) * ratio };
+      } else if (d <= L_3 + L_turn) {
+        const ratio = L_turn === 0 ? 0 : (d - L_3) / L_turn;
+        return { x: P1.x + (P2.x - P1.x) * ratio, y: P1.y + (P2.y - P1.y) * ratio };
+      } else {
+        const ratio = L_2 === 0 ? 0 : (d - L_3 - L_turn) / L_2;
+        return { x: P2.x + (P3.x - P2.x) * ratio, y: P2.y + (P3.y - P2.y) * ratio };
+      }
+    }
+
+    function calcPersonPosition(d, t, isRight = false) {
+      if (t <= 0) return { x: d.p1.x, y: d.p1.y };
+      if (t >= 1) return { x: d.p2.x, y: d.p2.y };
+      const idx = d.idx || 0;
+      const total = d.total || 30;
+      const delay = (idx / total) * 0.04;
+      const moveT = Math.max(0, Math.min(1, (t - delay) / (1 - 0.04)));
+      const s = easeInOutCubic(moveT);
+      const dx = d.p2.x - d.p1.x;
+      const dy = d.p2.y - d.p1.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1.0) return { x: d.p1.x + dx * s, y: d.p1.y + dy * s };
+      const numSteps = Math.max(3, Math.round(dist / 13));
+      const stepModulation = (Math.sin(2 * Math.PI * numSteps * s) / (2 * Math.PI * numSteps)) * 0.36;
+      const s_step = Math.max(0, Math.min(1, s - stepModulation));
+      let curX = d.p1.x + dx * s_step;
+      let curY = d.p1.y + dy * s_step;
+      const nx = -dy / dist;
+      const ny = dx / dist;
+      const stepSway = Math.sin(Math.PI * numSteps * s) * 0.65 * Math.sin(Math.PI * s);
+      curX += nx * stepSway;
+      curY += ny * stepSway;
+      return { x: curX, y: curY };
+    }
+
+    function getRealisticCircleTransition(pInit, pTarget, t) {
+      const dx0 = pInit.x - CIRC_CX;
+      const dy0 = pInit.y - CIRC_CY;
+      const dx1 = pTarget.x - CIRC_CX;
+      const dy1 = pTarget.y - CIRC_CY;
+      const r0 = Math.hypot(dx0, dy0);
+      const r1 = Math.hypot(dx1, dy1);
+      let a0 = Math.atan2(dy0, dx0);
+      let a1 = Math.atan2(dy1, dx1);
+      let da = a1 - a0;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      const sRadial = easeInOutCubic(Math.min(1, t / 0.50));
+      const sAngular = easeInOutCubic(Math.max(0, (t - 0.25) / 0.75));
+      const r = r0 + (r1 - r0) * sRadial;
+      const a = a0 + da * sAngular;
+      return { x: CIRC_CX + r * Math.cos(a), y: CIRC_CY + r * Math.sin(a) };
+    }
+
+    // ── 106-Second Master Timeline ──────────────────────────────────────────────
+    // 0..26s (26s): Вход диагоналей и последовательный марш 2-го и 3-го кругов
+    // 26..76s (50s): Пауза / Все стоят на своих местах (3 полукруга + 4 круга)
+    // 76..106s (30s): Полный переход кругов и полукругов в ромбы и 2 диагонали
+
+    // Хранилище текущих вычисленных позиций для отображения координат клика
+    const currentPositions = {
+      diamond: [],
+      circle: [],
+      diagLeft: [],
+      diagRight: [],
+    };
+
+    function renderDiamondDots(t) {
+      const tSec = t * 185.0;
+      let html = '';
+      currentPositions.diamond = [];
+
+      diamondDots.forEach((d, i) => {
+        let x, y;
+        if (tSec < 34.5) {
+          // 0..34.5s: Ожидание в коробке
+          const p = d.circleNum === 2 ? d.pBox : (d.circleNum === 3 ? d.pBox3 : (d.circleNum === 4 ? d.pBox4 : d.pInit));
+          x = p ? p.x : d.pInit.x;
+          y = p ? p.y : d.pInit.y;
+        } else if (tSec <= 60.0) {
+          // 34.5..60s (1:00, 25.5s): Синхронный марш 4-х кругов
+          const u = (tSec - 34.5) / 25.5;
+          if (d.circleNum === 2) {
+            const p = getPerformerEntrancePos(d, u);
+            x = p.x;
+            y = p.y;
+          } else if (d.circleNum === 3) {
+            const p = getPerformerEntrancePosCircle3(d, u);
+            x = p.x;
+            y = p.y;
+          } else if (d.circleNum === 4) {
+            const p = getPerformerEntrancePosCircle4(d, u);
+            x = p.x;
+            y = p.y;
+          } else {
+            x = d.pInit.x;
+            y = d.pInit.y;
+          }
+        } else if (tSec <= 120.0) {
+          // 60..120s (1:00..2:00, 60s): Все стоят в 4-х кругах
+          x = d.pInit.x;
+          y = d.pInit.y;
+        } else if (tSec < 134.0) {
+          // 2:00..2:14 (14s): Внутренний сбор / переход из 4-х кругов в 2 круга / 3 дуги
+          const u = (tSec - 120.0) / 14.0;
+          if (d.isInnerRing && d.color === PINK_GRAY) {
+            const sFast = easeInOutCubic(Math.min(1, u / 0.40));
+            const dx0 = d.pInit.x - CIRC_CX;
+            const dy0 = d.pInit.y - CIRC_CY;
+            const dx1 = d.p0.x - CIRC_CX;
+            const dy1 = d.p0.y - CIRC_CY;
+            const r0 = Math.hypot(dx0, dy0);
+            const r1 = Math.hypot(dx1, dy1);
+            let a0 = Math.atan2(dy0, dx0);
+            let a1 = Math.atan2(dy1, dx1);
+            let da = a1 - a0;
+            while (da > Math.PI) da -= 2 * Math.PI;
+            while (da < -Math.PI) da += 2 * Math.PI;
+            const r = r0 + (r1 - r0) * sFast;
+            const a = a0 + da * sFast;
+            x = CIRC_CX + r * Math.cos(a);
+            y = CIRC_CY + r * Math.sin(a);
+          } else {
+            const p = getCircleTransitionPt(d.pInit, d.p0, u);
+            x = p.x;
+            y = p.y;
+          }
+        } else if (tSec < 165.0) {
+          // 2:14..2:45 (31s): Выход в ромбы
+          const diamondT = (tSec - 134.0) / 31.0;
+          const curDist = d.s0 + (d.s1 - d.s0) * diamondT;
+          const p = getPointAtDist(d.trackPts, d.trackDists, curDist);
+          x = p.x;
+          y = p.y;
+        } else if (tSec <= 170.0) {
+          // 2:45..2:50 (5s): Фиксация в ромбах
+          x = d.p1.x;
+          y = d.p1.y;
+        } else if (tSec < 185.0) {
+          // 2:50..3:05 (15s): Марширование по индивидуальным направляющим трекам без пересечений и с сохранением дистанции
+          const u = (tSec - 170.0) / 15.0;
+          const s = easeInOutCubic(u);
+          if (d.hpTrackPts && d.hpTrackDists && d.hpTotalLen > 0) {
+            const curDist = d.hpTotalLen * s;
+            const p = getPointAtDist(d.hpTrackPts, d.hpTrackDists, curDist);
+            x = p.x;
+            y = p.y;
+          } else {
+            x = d.p1.x + (d.pHeadphone.x - d.p1.x) * s;
+            y = d.p1.y + (d.pHeadphone.y - d.p1.y) * s;
+          }
+        } else {
+          // 3:05+ : Фигура «Наушники»
+          x = d.pHeadphone.x;
+          y = d.pHeadphone.y;
+        }
+
+        currentPositions.diamond[i] = { x, y, dot: d };
+        html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diamond', ${i})" onclick="onDotClick(event, 'diamond', ${i})" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${R_D}" fill="${d.color}" stroke="transparent" stroke-width="12" />`;
+      });
+      diamondLayer.innerHTML = html;
+    }
+
+    const T_ALL_EXIT = Math.max(...diamondDots.map(d => (d.trackDists[60 + 20] - d.s0) / (d.s1 - d.s0)));
+    function renderCircleDots(t) {
+      const tSec = t * 185.0;
+      let html = '';
+      currentPositions.circle = [];
+
+      if (tSec < 34.5) {
+        // 0..34.5s: Ожидание в коробке
+        circle1Dots.forEach((d, i) => {
+          currentPositions.circle[i] = { x: d.pBox.x, y: d.pBox.y, dot: d };
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'circle', ${i})" onclick="onDotClick(event, 'circle', ${i})" cx="${d.pBox.x.toFixed(2)}" cy="${d.pBox.y.toFixed(2)}" r="${R_S}" fill="${BLACK_SQ}" stroke="transparent" stroke-width="10" />`;
+        });
+      } else if (tSec <= 60.0) {
+        // 34.5..60s (1:00, 25.5s): Синхронный марш 1-го круга
+        const u = (tSec - 34.5) / 25.5;
+        circle1Dots.forEach((d, i) => {
+          const p = getCircle1EntrancePos(d, u);
+          currentPositions.circle[i] = { x: p.x, y: p.y, dot: d };
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'circle', ${i})" onclick="onDotClick(event, 'circle', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_S}" fill="${BLACK_SQ}" stroke="transparent" stroke-width="10" />`;
+        });
+      } else if (tSec <= 120.0) {
+        // 60..120s (1:00..2:00, 60s): Стоят в 1-м круге R=10
+        circle1Dots.forEach((d, i) => {
+          currentPositions.circle[i] = { x: d.pInit.x, y: d.pInit.y, dot: d };
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'circle', ${i})" onclick="onDotClick(event, 'circle', ${i})" cx="${d.pInit.x.toFixed(2)}" cy="${d.pInit.y.toFixed(2)}" r="${R_S}" fill="${BLACK_SQ}" stroke="transparent" stroke-width="10" />`;
+        });
+      } else {
+        // 120..165s: Раскрытие снизу на 2:00..2:14 и закрытие после выхода ромбов. После 2:45 остается закрытым!
+        let openCols;
+        if (tSec < 134.0) {
+          const u = (tSec - 120.0) / 14.0;
+          openCols = 2 * easeInOutCubic(u);
+        } else if (tSec < 165.0) {
+          const diamondT = (tSec - 134.0) / 31.0;
+          const closeT = Math.max(0, Math.min(1, (diamondT - T_ALL_EXIT) / 0.04));
+          openCols = 2 * (1 - closeT);
+        } else {
+          openCols = 0; // Закрыт
+        }
+        const pts = openCircPts(CIRC_CX, CIRC_CY, CIRC_R, CIRC_N, openCols);
+        pts.forEach((p, i) => {
+          currentPositions.circle[i] = { x: p.x, y: p.y, dot: { color: BLACK_SQ, idx: i } };
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'circle', ${i})" onclick="onDotClick(event, 'circle', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_S}" fill="${BLACK_SQ}" stroke="transparent" stroke-width="10" />`;
+        });
+      }
+      circleLayer.innerHTML = html;
+    }
+
+    function renderDiagonalDots(t) {
+      const tSec = t * 185.0;
+      let html = '';
+      currentPositions.diagLeft = [];
+      currentPositions.diagRight = [];
+
+      // Left performers
+      for (let i = 0; i < dotsLeft.length; i++) {
+        const d = dotsLeft[i];
+        let p;
+        if (tSec < 68.0) {
+          // 0..1:08 (68s): Стоят в коробке ожидания
+          p = getEntranceLinePoint(d.lineNum, d.lineDotIdx, d.lineTotal, false, 0);
+        } else if (tSec <= 84.0) {
+          // 1:08..1:24 (16s): Вход полукругов (3 дуги)
+          const u = (tSec - 68.0) / 16.0;
+          p = getEntranceLinePoint(d.lineNum, d.lineDotIdx, d.lineTotal, false, u);
+        } else if (tSec <= 120.0) {
+          // 1:24..2:00 (36s): Главная статичная сцена (3 дуги)
+          p = d.p0;
+        } else if (tSec < 134.0) {
+          // 2:00..2:14 (14s): Переход полукругов из 3-х дуг в 3 линии (НАЧИНАЮТ ДВИЖЕНИЕ ОТ 2:00!)
+          const u = (tSec - 120.0) / 14.0;
+          const s = easeInOutCubic(u);
+          p = {
+            x: d.p0.x + (d.p1.x - d.p0.x) * s,
+            y: d.p0.y + (d.p1.y - d.p0.y) * s,
+          };
+        } else if (tSec < 165.0) {
+          // 2:14..2:45 (31s): Переход из 3-х линий в 2 диагональные линии
+          const u = (tSec - 134.0) / 31.0;
+          p = calcPersonPosition(d, u, false);
+        } else if (tSec <= 170.0) {
+          // 2:45..2:50 (5s): Стоят в 2-х диагональных линиях
+          p = d.p2;
+        } else if (tSec < 185.0) {
+          // 2:50..3:05 (15s): 10 человек с конца диагоналей закрывают наушник слева (10.5:7..2 и 11:7..2), а остальные продвигаются вперед и подключаются к наушникам (15:7 и 15.5:6.8)
+          const u = (tSec - 170.0) / 15.0;
+          const s = easeInOutCubic(u);
+          if (d.trackPts && d.trackDists && d.totalLen > 0) {
+            const curDist = d.totalLen * s;
+            p = getPointAtDist(d.trackPts, d.trackDists, curDist);
+          } else if (d.p3) {
+            p = {
+              x: d.p2.x + (d.p3.x - d.p2.x) * s,
+              y: d.p2.y + (d.p3.y - d.p2.y) * s,
+            };
+          } else {
+            p = d.p2;
+          }
+        } else {
+          // 3:05+ : Фиксация в закрывающих линиях и подключенных диагоналях
+          p = d.p3 || d.p2;
+        }
+        currentPositions.diagLeft[i] = { x: p.x, y: p.y, dot: d };
+        html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagLeft', ${i})" onclick="onDotClick(event, 'diagLeft', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;
+      }
+
+      // Right performers (mirrored)
+      for (let i = 0; i < dotsRight.length; i++) {
+        const d = dotsRight[i];
+        let p;
+        if (tSec < 68.0) {
+          p = getEntranceLinePoint(d.lineNum, d.lineDotIdx, d.lineTotal, true, 0);
+        } else if (tSec <= 84.0) {
+          const u = (tSec - 68.0) / 16.0;
+          p = getEntranceLinePoint(d.lineNum, d.lineDotIdx, d.lineTotal, true, u);
+        } else if (tSec <= 120.0) {
+          p = d.p0;
+        } else if (tSec < 134.0) {
+          const u = (tSec - 120.0) / 14.0;
+          const s = easeInOutCubic(u);
+          p = {
+            x: d.p0.x + (d.p1.x - d.p0.x) * s,
+            y: d.p0.y + (d.p1.y - d.p0.y) * s,
+          };
+        } else if (tSec < 165.0) {
+          const u = (tSec - 134.0) / 31.0;
+          p = calcPersonPosition(d, u, true);
+        } else if (tSec <= 170.0) {
+          p = d.p2;
+        } else if (tSec < 185.0) {
+          const u = (tSec - 170.0) / 15.0;
+          const s = easeInOutCubic(u);
+          if (d.trackPts && d.trackDists && d.totalLen > 0) {
+            const curDist = d.totalLen * s;
+            p = getPointAtDist(d.trackPts, d.trackDists, curDist);
+          } else if (d.p3) {
+            p = {
+              x: d.p2.x + (d.p3.x - d.p2.x) * s,
+              y: d.p2.y + (d.p3.y - d.p2.y) * s,
+            };
+          } else {
+            p = d.p2;
+          }
+        } else {
+          p = d.p3 || d.p2;
+        }
+        currentPositions.diagRight[i] = { x: p.x, y: p.y, dot: d };
+        html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagRight', ${i})" onclick="onDotClick(event, 'diagRight', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;
+      }
+      diagLayer.innerHTML = html;
+    }
+
+    function updateSelectionRing() {
+      const selLayer = document.getElementById('selection-layer');
+      const card = document.getElementById('dot-info-card');
+      if (!selLayer || !card) return;
+
+      if (!selectedDotInfo) {
+        selLayer.innerHTML = '';
+        card.style.display = 'none';
+        return;
+      }
+
+      const { group, idx } = selectedDotInfo;
+      const list = currentPositions[group];
+      if (!list || !list[idx]) return;
+
+      const item = list[idx];
+      const { x, y, dot } = item;
+      const tSec = currentT * 185.0;
+
+      let guideLinesHtml = '';
+
+      // Crosshair & Alignment Lines System
+      if (tSec >= 184.0 && group === 'diamond') {
+        // Find dots that share the same horizontal row (Y within 2.5px)
+        const rowMatches = diamondDots.filter(d => d.pHeadphone && Math.abs(d.pHeadphone.y - y) <= 2.5);
+        // Find dots that share the same vertical col (X within 2.5px)
+        const colMatches = diamondDots.filter(d => d.pHeadphone && Math.abs(d.pHeadphone.x - x) <= 2.5);
+
+        if (rowMatches.length >= 2) {
+          // Bright horizontal laser line connecting all dots in this row!
+          guideLinesHtml += `
+            <line x1="${FX}" y1="${y}" x2="${FX + FIELD_W}" y2="${y}" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 4" opacity="0.9">
+              <animate attributeName="stroke-dashoffset" values="0;24" dur="1.2s" repeatCount="indefinite"/>
+            </line>
+            <rect x="${FX + 10}" y="${y - 12}" width="140" height="22" rx="5" fill="rgba(15, 23, 42, 0.88)" stroke="#38bdf8" stroke-width="1"/>
+            <text x="${FX + 16}" y="${y + 3}" fill="#38bdf8" font-size="11" font-weight="700" font-family="sans-serif">📏 Ряд (${rowMatches.length} точек в линию)</text>
+          `;
+        } else {
+          // Subtle aim guide
+          guideLinesHtml += `<line x1="${FX}" y1="${y}" x2="${FX + FIELD_W}" y2="${y}" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" opacity="0.45" />`;
+        }
+
+        if (colMatches.length >= 2) {
+          // Bright vertical laser line connecting all dots in this column!
+          guideLinesHtml += `
+            <line x1="${x}" y1="${FY}" x2="${x}" y2="${FY + FIELD_H}" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 4" opacity="0.9">
+              <animate attributeName="stroke-dashoffset" values="0;24" dur="1.2s" repeatCount="indefinite"/>
+            </line>
+            <rect x="${x - 65}" y="${FY + 10}" width="130" height="22" rx="5" fill="rgba(15, 23, 42, 0.88)" stroke="#38bdf8" stroke-width="1"/>
+            <text x="${x - 58}" y="${FY + 25}" fill="#38bdf8" font-size="11" font-weight="700" font-family="sans-serif">📏 Кол (${colMatches.length} точек в линию)</text>
+          `;
+        } else {
+          // Subtle aim guide
+          guideLinesHtml += `<line x1="${x}" y1="${FY}" x2="${x}" y2="${FY + FIELD_H}" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" opacity="0.45" />`;
+        }
+      }
+
+      // Draw Animated Target Halo & Dynamic Alignment Lines
+      selLayer.innerHTML = `
+        ${guideLinesHtml}
+        <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="10" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4 2">
+          <animateTransform attributeName="transform" type="rotate" from="0 ${x} ${y}" to="360 ${x} ${y}" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="14" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.5">
+          <animate attributeName="r" values="10;17;10" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+      `;
+
+      // Build Details for Card
+      let title = "Участник";
+      let groupName = "";
+      let colorHex = dot.color || "#000";
+      let icon = "👤";
+
+      if (group === 'diamond') {
+        if (dot.circleNum === 2) {
+          const m = dot.trainIdx ?? 0;
+          const colNum = Math.floor(m / 25) + 1;
+          const spotInCol = (m % 25) + 1;
+          if (m === 0) {
+            title = "👑 Капитан 2-го круга (Линия 1, №1)";
+            icon = "👑";
+          } else {
+            title = `Участник 2-го круга (Линия ${colNum}, №${spotInCol})`;
+          }
+          groupName = "2-й Круг (R=7, 100 чел)";
+        } else if (dot.circleNum === 3) {
+          const m = dot.trainIdx3 ?? 0;
+          const colNum = Math.floor(m / 25) + 1;
+          const spotInCol = (m % 25) + 1;
+          if (m === 0) {
+            title = "👑 Капитан 3-го круга (Линия 1, №1)";
+            icon = "👑";
+          } else {
+            title = `Участник 3-го круга (Линия ${colNum}, №${spotInCol})`;
+          }
+          groupName = "3-й Круг (R=4, 50 чел)";
+        } else if (dot.circleNum === 4) {
+          const m = dot.trainIdx4 ?? (dot.idx ?? 0);
+          if (m === 0) {
+            title = "👑 Капитан 4-го круга (Колонна 0, №1)";
+            icon = "👑";
+          } else {
+            title = `Участник 4-го круга (Колонна 0, №${m + 1})`;
+            icon = "🔴";
+          }
+          groupName = "4-й Круг (R=1, 10 чел)";
+        }
+      } else if (group === 'diagLeft') {
+        title = `Левая диагональ: Линия ${dot.lineNum}, №${dot.lineDotIdx + 1}`;
+        groupName = "Левая диагональная группа (100 чел)";
+      } else if (group === 'diagRight') {
+        title = `Правая диагональ: Линия ${dot.lineNum}, №${dot.lineDotIdx + 1}`;
+        groupName = "Правая диагональная группа (100 чел)";
+      } else if (group === 'circle') {
+        title = `Точка 1-го внешнего круга №${idx + 1}`;
+        groupName = "1-й Внешний круг (R=10, 140 чел)";
+      }
+
+      const grid = getFieldGridCoords(x, y);
+
+      document.getElementById('card-dot-icon').textContent = icon;
+      document.getElementById('card-dot-title').textContent = title;
+      document.getElementById('card-dot-group').textContent = groupName;
+      document.getElementById('card-dot-swatch').style.backgroundColor = colorHex;
+      document.getElementById('card-dot-color-name').textContent = getColorName(colorHex);
+      document.getElementById('card-dot-grid').textContent = `Кол: ${grid.colStr} | Ряд: ${grid.rowStr}`;
+      document.getElementById('card-dot-svg').textContent = `X: ${grid.svgX} px, Y: ${grid.svgY} px`;
+
+      card.style.display = 'block';
+    }
+
+    const diagLayer = document.getElementById('diag-layer');
+    const diamondLayer = document.getElementById('diamond-layer');
+    const circleLayer = document.getElementById('circle-layer');
+    const slider = document.getElementById('progress-slider');
+    const btn0 = document.getElementById('btn-draw0');
+    const btn1 = document.getElementById('btn-draw1');
+    const btn2 = document.getElementById('btn-draw2');
+    const btn3 = document.getElementById('btn-draw3');
+    const btn4 = document.getElementById('btn-draw4');
+    const btn5 = document.getElementById('btn-draw5');
+    const btnPlay = document.getElementById('btn-play');
+    const playIcon = document.getElementById('play-icon');
+    const playText = document.getElementById('play-text');
+
+    let currentT = 0.0;
+    let isPlaying = false;
+    let animDirection = 1;
+    let animReq = null;
+
+    function formatTime(tSec) {
+      const m = Math.floor(tSec / 60);
+      const s = (tSec % 60).toFixed(1);
+      if (m > 0) {
+        return `${m}:${s.padStart(4, '0')}`;
+      }
+      return `${s}с`;
+    }
+
+    function updateUI(t) {
+      currentT = Math.max(0, Math.min(1, t));
+
+      const slider = document.getElementById('progress-slider');
+      if (slider) slider.value = Math.round(currentT * 1850);
+
+      const tSec = currentT * 185.0;
+      const timeDisplay = document.getElementById('time-display');
+      if (timeDisplay) timeDisplay.textContent = formatTime(tSec);
+
+      const btn0 = document.getElementById('btn-draw0');
+      const btn1 = document.getElementById('btn-draw1');
+      const btn2 = document.getElementById('btn-draw2');
+      const btn3 = document.getElementById('btn-draw3');
+      const btn4 = document.getElementById('btn-draw4');
+      const btn5 = document.getElementById('btn-draw5');
+      const btn6 = document.getElementById('btn-draw6');
+      const btn7 = document.getElementById('btn-draw7');
+      const btn8 = document.getElementById('btn-draw8');
+
+      if (btn0) btn0.classList.toggle('active', tSec < 17.0);
+      if (btn1) btn1.classList.toggle('active', tSec >= 17.0 && tSec < 47.0);
+      if (btn2) btn2.classList.toggle('active', tSec >= 47.0 && tSec < 64.0);
+      if (btn3) btn3.classList.toggle('active', tSec >= 64.0 && tSec < 76.0);
+      if (btn4) btn4.classList.toggle('active', tSec >= 76.0 && tSec < 102.0);
+      if (btn5) btn5.classList.toggle('active', tSec >= 102.0 && tSec < 127.0);
+      if (btn6) btn6.classList.toggle('active', tSec >= 127.0 && tSec < 150.0);
+      if (btn7) btn7.classList.toggle('active', tSec >= 150.0 && tSec < 177.5);
+      if (btn8) btn8.classList.toggle('active', tSec >= 177.5);
+
+      renderDiamondDots(currentT);
+      renderCircleDots(currentT);
+      renderDiagonalDots(currentT);
+      updateSelectionRing();
+    }
+
+    const audio = document.getElementById('bg-audio');
+    const btnMute = document.getElementById('btn-mute');
+    const muteIcon = document.getElementById('mute-icon');
+
+    function toggleMute() {
+      if (!audio) return;
+      audio.muted = !audio.muted;
+      muteIcon.textContent = audio.muted ? '🔇' : '🔊';
+    }
+
+    function setMode(targetT) {
+      stopAnimation();
+      updateUI(targetT);
+      if (audio) {
+        audio.currentTime = targetT * 185.0;
+      }
+    }
+
+    function onSlider(val) {
+      stopAnimation();
+      const targetT = Number(val) / 1850;
+      updateUI(targetT);
+      if (audio) {
+        audio.currentTime = targetT * 185.0;
+      }
+    }
+
+    function stopAnimation() {
+      if (isPlaying) {
+        isPlaying = false;
+        cancelAnimationFrame(animReq);
+        btnPlay.classList.remove('playing');
+        playIcon.textContent = '▶';
+        playText.textContent = 'Запустить с музыкой (3:05)';
+        if (audio && !audio.paused) {
+          audio.pause();
+        }
+      }
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        stopAnimation();
+      } else {
+        isPlaying = true;
+        btnPlay.classList.add('playing');
+        playIcon.textContent = '⏸';
+        playText.textContent = 'Пауза';
+
+        if (currentT >= 1.0) {
+          currentT = 0.0;
+        }
+
+        const startSec = currentT * 185.0;
+        if (audio) {
+          audio.currentTime = startSec;
+          audio.play().catch(e => console.log('Audio playback notification:', e));
+        }
+
+        let lastTime = performance.now();
+        const TOTAL_DURATION = 185000; // 185 секунд (3:05)
+
+        function step(now) {
+          if (!isPlaying) return;
+
+          // Высокоточная синхронизация видеоряда с аудиофайлом DUSHANBE-3.wav
+          if (audio && !audio.paused && !audio.ended && audio.duration > 0) {
+            currentT = Math.min(1.0, audio.currentTime / 185.0);
+          } else {
+            const dt = now - lastTime;
+            currentT += (dt / TOTAL_DURATION);
+            if (currentT >= 1.0) currentT = 1.0;
+          }
+          lastTime = now;
+
+          updateUI(currentT);
+
+          if (currentT >= 1.0) {
+            stopAnimation();
+            return;
+          }
+
+          animReq = requestAnimationFrame(step);
+        }
+
+        animReq = requestAnimationFrame(step);
+      }
+    }
+
+    // ── Direct, Precise Dot PointerDown, Click & Swap System ──
+    let isDraggingDot = false;
+    let draggedDotIdx = null;
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notify');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function onResetSelectedDot() {
+      if (!selectedDotInfo || selectedDotInfo.group !== 'diamond') return;
+      const d = diamondDots[selectedDotInfo.idx];
+      if (d && d.pHeadphone) {
+        d.pHeadphone.x = d.pHeadphone.defaultX;
+        d.pHeadphone.y = d.pHeadphone.defaultY;
+        updateUI(currentT);
+        updateSelectionRing();
+        showToast('↩️ Позиция точки сброшена!');
+      }
+    }
+
+    function onResetAllHeadphones() {
+      diamondDots.forEach(d => {
+        if (d && d.pHeadphone) {
+          d.pHeadphone.x = d.pHeadphone.defaultX;
+          d.pHeadphone.y = d.pHeadphone.defaultY;
+        }
+      });
+      updateUI(currentT);
+      updateSelectionRing();
+      showToast('♻️ Все точки наушников возвращены в исходный вид!');
+    }
+
+    // ── Direct, Zero-Jump PointerDown & Fluid Movement System ──
+    let isPointerDown = false;
+    let isDragging = false;
+    let dragStartPt = { x: 0, y: 0 };
+    let dragOffset = { x: 0, y: 0 };
+    let dragDotIdx = null;
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notify');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    window.onNudgeDot = function(dxSteps, dySteps) {
+      if (!selectedDotInfo || selectedDotInfo.group !== 'diamond') return;
+      const d = diamondDots[selectedDotInfo.idx];
+      if (d && d.pHeadphone) {
+        d.pHeadphone.x += dxSteps * 6;
+        d.pHeadphone.y += dySteps * 6;
+        updateDotHpTrack(d);
+        updateUI(currentT);
+        updateSelectionRing();
+      }
+    };
+
+    window.onResetSelectedDot = function() {
+      if (!selectedDotInfo || selectedDotInfo.group !== 'diamond') return;
+      const d = diamondDots[selectedDotInfo.idx];
+      if (d && d.pHeadphone) {
+        d.pHeadphone.x = d.pHeadphone.defaultX;
+        d.pHeadphone.y = d.pHeadphone.defaultY;
+        updateDotHpTrack(d);
+        updateUI(currentT);
+        updateSelectionRing();
+        showToast('↩️ Позиция точки сброшена!');
+      }
+    };
+
+    window.onResetAllHeadphones = function() {
+      diamondDots.forEach(d => {
+        if (d && d.pHeadphone) {
+          d.pHeadphone.x = d.pHeadphone.defaultX;
+          d.pHeadphone.y = d.pHeadphone.defaultY;
+          updateDotHpTrack(d);
+        }
+      });
+      updateUI(currentT);
+      updateSelectionRing();
+      showToast('♻️ Все точки наушников возвращены в исходный вид!');
+    };
+
+    // Direct pointer down on the EXACT clicked dot with ZERO JUMP
+    window.onDotPointerDown = function(event, group, idx) {
+      event.stopPropagation();
+      const tSec = currentT * 185.0;
+
+      // 1. Выбираем точку (позиция НЕ МЕНЯЕТСЯ!)
+      selectedDotInfo = { group, idx };
+      updateUI(currentT);
+      updateSelectionRing();
+
+      // 2. Инициализируем перетаскивание с запоминанием точного смещения курсора
+      if (tSec >= 184.0 && group === 'diamond') {
+        isPointerDown = true;
+        isDragging = false;
+        dragDotIdx = idx;
+
+        const pt = getSvgPoint(event);
+        dragStartPt = pt;
+
+        const d = diamondDots[idx];
+        if (d && d.pHeadphone) {
+          dragOffset = {
+            x: pt.x - d.pHeadphone.x,
+            y: pt.y - d.pHeadphone.y,
+          };
+        }
+      }
+
+      const editorBar = document.getElementById('headphone-editor-bar');
+      const hintText = document.getElementById('editor-hint-text');
+      if (editorBar) {
+        editorBar.style.display = (tSec >= 184.0) ? 'flex' : 'none';
+        if (hintText && group === 'diamond') {
+          const d = diamondDots[idx];
+          hintText.textContent = `Выбран кружочек (${getColorName(d.color)} №${idx + 1}). Тяните мышкой или используйте стрелки клавиатуры!`;
+          hintText.style.color = '#fde047';
+        }
+      }
+    };
+
+    // Keyboard Arrow Keys Support (▲ ▼ ◀ ▶, с зажатым Shift шаг 24px)
+    window.addEventListener('keydown', (e) => {
+      if (!selectedDotInfo || selectedDotInfo.group !== 'diamond') return;
+      const tSec = currentT * 185.0;
+      if (tSec < 184.0) return;
+
+      const step = e.shiftKey ? 4 : 1; // Shift = 24px, обычный = 6px
+
+      if (e.key === 'ArrowUp') {
+        onNudgeDot(0, -step);
+        e.preventDefault();
+      } else if (e.key === 'ArrowDown') {
+        onNudgeDot(0, step);
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft') {
+        onNudgeDot(-step, 0);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight') {
+        onNudgeDot(step, 0);
+        e.preventDefault();
+      }
+    });
+
+    const svgElem = document.querySelector('svg');
+    svgElem.addEventListener('pointerdown', (e) => {
+      // Клик по пустому полю сбрасывает выбор
+      if (e.target.tagName !== 'circle') {
+        selectedDotInfo = null;
+        updateSelectionRing();
+        const hintText = document.getElementById('editor-hint-text');
+        if (hintText) {
+          hintText.textContent = 'Кликните кружочек для перемещения';
+          hintText.style.color = '#94a3b8';
+        }
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isPointerDown || dragDotIdx === null) return;
+      const pt = getSvgPoint(e);
+
+      // Порог для старта перетаскивания (3px), чтобы обычный клик не смещал точку
+      const dist = Math.hypot(pt.x - dragStartPt.x, pt.y - dragStartPt.y);
+      if (!isDragging && dist > 3) {
+        isDragging = true;
+      }
+
+      if (isDragging) {
+        const d = diamondDots[dragDotIdx];
+        if (d && d.pHeadphone) {
+          let newX = pt.x - dragOffset.x;
+          let newY = pt.y - dragOffset.y;
+
+          // Мягкое магнитное прилипание при приближении к линии других точек (в пределах 3px)
+          const rowMatch = diamondDots.find((other, oi) => oi !== dragDotIdx && other.pHeadphone && Math.abs(other.pHeadphone.y - newY) < 3.0);
+          if (rowMatch) newY = rowMatch.pHeadphone.y;
+
+          const colMatch = diamondDots.find((other, oi) => oi !== dragDotIdx && other.pHeadphone && Math.abs(other.pHeadphone.x - newX) < 3.0);
+          if (colMatch) newX = colMatch.pHeadphone.x;
+
+          d.pHeadphone.x = newX;
+          d.pHeadphone.y = newY;
+          updateDotHpTrack(d);
+
+          updateUI(currentT);
+          updateSelectionRing();
+        }
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      isPointerDown = false;
+      isDragging = false;
+      dragDotIdx = null;
+    });
+
+    function getSvgPoint(e) {
+      const rect = svgElem.getBoundingClientRect();
+      const scaleX = SVG_W / rect.width;
+      const scaleY = SVG_H / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+      };
+    }
+
+    function onDotClick(event, group, idx) {
+      if (event) event.stopPropagation();
+    }
+
+    // Initial render in State 0
+    updateUI(0.0);
+  </script>
+</body>
+
+</html>

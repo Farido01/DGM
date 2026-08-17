@@ -1,0 +1,13 @@
+{
+  "name": "2d-grid-layout-design",
+  "version": "1.0.0",
+  "description": "Interactive 2D Stadium Choreography Animation",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'Static build ready'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
