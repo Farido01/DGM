@@ -2680,8 +2680,18 @@ y: gy(rowJ(rowEnd)),
             p = d.p2;
           }
         }
-        currentPositions.diagLeft[i] = { x: p.x, y: p.y, dot: d };
-        html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagLeft', ${i})" onclick="onDotClick(event, 'diagLeft', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;
+
+        // 3:05..3:15 (185s..195s): Те, кто был в диагоналях/оголовье (кроме закрывающих наушники), плавно исчезают
+        let opacity = 1.0;
+        if (!d.hookTrackPts && tSec > 185.0) {
+          const fadeU = Math.min(1.0, (tSec - 185.0) / 10.0);
+          opacity = Math.max(0.0, 1.0 - easeInOutCubic(fadeU));
+        }
+
+        currentPositions.diagLeft[i] = { x: p.x, y: p.y, dot: d, opacity };
+        if (opacity > 0.001) {
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagLeft', ${i})" onclick="onDotClick(event, 'diagLeft', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" opacity="${opacity.toFixed(3)}" stroke="transparent" stroke-width="10" />`;
+        }
       }
 
       // Right performers (mirrored)
@@ -2730,8 +2740,17 @@ y: gy(rowJ(rowEnd)),
             p = d.p2;
           }
         }
-        currentPositions.diagRight[i] = { x: p.x, y: p.y, dot: d };
-        html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagRight', ${i})" onclick="onDotClick(event, 'diagRight', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;
+
+        let opacity = 1.0;
+        if (!d.hookTrackPts && tSec > 185.0) {
+          const fadeU = Math.min(1.0, (tSec - 185.0) / 10.0);
+          opacity = Math.max(0.0, 1.0 - easeInOutCubic(fadeU));
+        }
+
+        currentPositions.diagRight[i] = { x: p.x, y: p.y, dot: d, opacity };
+        if (opacity > 0.001) {
+          html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagRight', ${i})" onclick="onDotClick(event, 'diagRight', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" opacity="${opacity.toFixed(3)}" stroke="transparent" stroke-width="10" />`;
+        }
       }
       diagLayer.innerHTML = html;
     }

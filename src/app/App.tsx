@@ -2543,21 +2543,36 @@ export default function App() {
             } else if (tSec <= 170.0) {
               p = d.p2;
             } else if (tSec < 185.0) {
+              const u = (tSec - 170.0) / 15.0;
+              const s = easeInOutCubic(u);
               if (d.hookTrackPts && d.hookTrackDists) {
-                const u = (tSec - 170.0) / 15.0;
-                const s = easeInOutCubic(u);
                 const curDist = (d.hookS0 || 0) + ((d.hookS1 || 0) - (d.hookS0 || 0)) * s;
                 p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
+              } else if (d.p3) {
+                p = {
+                  x: d.p2.x + (d.p3.x - d.p2.x) * s,
+                  y: d.p2.y + (d.p3.y - d.p2.y) * s,
+                };
               } else {
                 p = d.p2;
               }
             } else {
               if (d.hookTrackPts && d.hookTrackDists) {
                 p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1 || 0);
+              } else if (d.p3) {
+                p = d.p3;
               } else {
                 p = d.p2;
               }
             }
+
+            let opacity = 1.0;
+            if (!d.hookTrackPts && tSec > 185.0) {
+              const fadeU = Math.min(1.0, (tSec - 185.0) / 10.0);
+              opacity = Math.max(0.0, 1.0 - easeInOutCubic(fadeU));
+            }
+            if (opacity <= 0.001) return null;
+
             return (
               <circle
                 key={`dl-${i}`}
@@ -2565,6 +2580,7 @@ export default function App() {
                 cy={p.y}
                 r={R_LINE}
                 fill={d.color}
+                opacity={opacity}
                 style={{ cursor: "pointer" }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -2617,6 +2633,14 @@ export default function App() {
                 p = d.p2;
               }
             }
+
+            let opacity = 1.0;
+            if (!d.hookTrackPts && tSec > 185.0) {
+              const fadeU = Math.min(1.0, (tSec - 185.0) / 10.0);
+              opacity = Math.max(0.0, 1.0 - easeInOutCubic(fadeU));
+            }
+            if (opacity <= 0.001) return null;
+
             return (
               <circle
                 key={`dr-${i}`}
@@ -2624,6 +2648,7 @@ export default function App() {
                 cy={p.y}
                 r={R_LINE}
                 fill={d.color}
+                opacity={opacity}
                 style={{ cursor: "pointer" }}
                 onClick={(e) => {
                   e.stopPropagation();
