@@ -1122,17 +1122,9 @@
         cp1 = { x: pStart.x + dx * 0.35, y: pStart.y - arcY };
         cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y - arcY * 0.5 };
       } else if (color === YELLOW) {
-        if (!isInnerRing && idx >= 5) {
-          // 5 точек внутреннего ромба: аккуратное, плавное скольжение в нижний внешний купол
-          const outX = isRight ? 16 : -16;
-          cp1 = { x: pStart.x + dx * 0.3 + outX, y: pStart.y + dy * 0.35 };
-          cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 8 };
-        } else {
-          // Плавный обход периметра купола
-          const outX = isRight ? (isInnerRing ? 18 : 8) : (isInnerRing ? -18 : -8);
-          cp1 = { x: pStart.x + dx * 0.4 + outX, y: pStart.y + dy * 0.25 };
-          cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 6 };
-        }
+        // Оранжевые/Желтые: идеально гладкий, прямой и естественный перекат на свои позиции без искусственных смещений
+        cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
+        cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
       } else if (color === PINK_GRAY) {
         // Розово-серые: мягкий прямой вход в вертикальные стойки
         cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + dy * 0.25 };

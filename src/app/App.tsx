@@ -802,17 +802,9 @@ function makeHeadphoneTrackApp(pStart: PP, pEnd: PP, color: string, isInnerRing:
     cp1 = { x: pStart.x + dx * 0.35, y: pStart.y - arcY };
     cp2 = { x: pEnd.x - dx * 0.35, y: pEnd.y - arcY * 0.5 };
   } else if (color === YELLOW) {
-    if (!isInnerRing && idx >= 5) {
-      // 5 точек внутреннего ромба: аккуратное, плавное скольжение в нижний внешний купол
-      const outX = isRight ? 16 : -16;
-      cp1 = { x: pStart.x + dx * 0.3 + outX, y: pStart.y + dy * 0.35 };
-      cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 8 };
-    } else {
-      // Плавный обход периметра купола
-      const outX = isRight ? (isInnerRing ? 18 : 8) : (isInnerRing ? -18 : -8);
-      cp1 = { x: pStart.x + dx * 0.4 + outX, y: pStart.y + dy * 0.25 };
-      cp2 = { x: pEnd.x - dx * 0.2 + outX * 0.5, y: pEnd.y - 6 };
-    }
+    // Оранжевые/Желтые: идеально гладкий, прямой и естественный перекат на свои позиции без искусственных смещений
+    cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
+    cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
   } else if (color === PINK_GRAY) {
     // Розово-серые: мягкий прямой вход в вертикальные стойки
     cp1 = { x: pStart.x + dx * 0.35, y: pStart.y + dy * 0.25 };
@@ -1332,305 +1324,126 @@ type AnimatedDot = {
   p0: PP;
   p1: PP;
   p2: PP;
-  p3?: PP;
-  trackPts?: PP[];
-  trackDists?: number[];
-  totalLen?: number;
   color: string;
   type: 'L1_top' | 'L2_cross' | 'L1_bot' | 'L3_march' | 'L2_bot';
   idx: number;
   total: number;
 };
 
-// Helper to compute p3 for left and right diagonal performers (2:50..3:05 -> 3:05+)
-function getDiagP3App(isRight: boolean, lineType: number, m: number) {
-  const colFn = isRight ? colR : colL;
-  if (lineType === 1) {
-    // Line 1 (inner):
-    if (m < 10) {
-      // Внутренняя закрывающая линия наушника: 11:7 -> 11:2 (10 точек)
-      const c = 11.0;
-      const r = 7.0 - (7.0 - 2.0) * (m / 9);
-      return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: true, closingIdx: m, isOuterClosing: false };
-    } else {
-      // Подключенная внутренняя диагональ: 15:7 -> 25:3 (40 точек)
-      const k = m - 10;
-      const c = 15.0 + (25.0 - 15.0) * (k / 39);
-      const r = 7.0 - (7.0 - 3.0) * (k / 39);
-      return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: false, diagIdx: k };
-    }
-  } else {
-    // Line 2 (outer):
-    if (m < 10) {
-      // Внешняя закрывающая линия наушника: 10.5:7 -> 10.5:2 (10 точек)
-      const c = 10.5;
-      const r = 7.0 - (7.0 - 2.0) * (m / 9);
-      return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: true, closingIdx: m, isOuterClosing: true };
-    } else {
-      // Подключенная внешняя диагональ: 15.5:6.8 -> 26:3.5 (40 точек)
-      const k = m - 10;
-      const c = 15.5 + (26.0 - 15.5) * (k / 39);
-      const r = 6.8 - (6.8 - 3.5) * (k / 39);
-      return { x: gx(colFn(c)), y: gy(rowJ(r)), defaultX: gx(colFn(c)), defaultY: gy(rowJ(r)), isClosing: false, diagIdx: k };
-    }
-  }
-}
-
-function makeDiagTrackApp(pStart: PP, pEnd: PP, isClosing: boolean, isOuter: boolean, isRight: boolean) {
-  const dx = pEnd.x - pStart.x;
-  const dy = pEnd.y - pStart.y;
-
-  let cp1: PP, cp2: PP;
-  if (isClosing) {
-    if (isOuter) {
-      // Внешняя часть сначала идет вперед, затем поворачивается как дуга параллельно внутренней
-      const outX = isRight ? 16 : -16;
-      cp1 = { x: pStart.x + dx * 0.35 + outX, y: pStart.y + dy * 0.3 };
-      cp2 = { x: pEnd.x - dx * 0.25 + outX * 0.5, y: pEnd.y - 12 };
-    } else {
-      // Внутренняя закрывающая линия
-      const outX = isRight ? 8 : -8;
-      cp1 = { x: pStart.x + dx * 0.35 + outX, y: pStart.y + dy * 0.3 };
-      cp2 = { x: pEnd.x - dx * 0.25 + outX * 0.5, y: pEnd.y - 10 };
-    }
-  } else {
-    // Скольжение вперед вдоль диагональной линии
-    cp1 = { x: pStart.x + dx * 0.33, y: pStart.y + dy * 0.33 };
-    cp2 = { x: pEnd.x - dx * 0.33, y: pEnd.y - dy * 0.33 };
-  }
-
-  const pts: PP[] = [];
-  const N = 40;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const v = 1 - t;
-    const x = v*v*v*pStart.x + 3*v*v*t*cp1.x + 3*v*t*t*cp2.x + t*t*t*pEnd.x;
-    const y = v*v*v*pStart.y + 3*v*v*t*cp1.y + 3*v*t*t*cp2.y + t*t*t*pEnd.y;
-    pts.push({ x, y });
-  }
-
-  const dists: number[] = [0];
-  for (let i = 1; i < pts.length; i++) {
-    dists.push(dists[i-1] + Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y));
-  }
-
-  return { pts, dists, totalLen: dists[dists.length - 1] };
-}
-
 const dotsLeft: AnimatedDot[] = [
   // 1. Top 15 dots from Line 1
-  ...L1_pts_35.slice(0, 15).map((p, i) => {
-    const m = 2 * i;
-    const p3 = getDiagP3App(false, 1, m);
-    const p2 = L1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, false);
-    return {
-      lineNum: 1, lineDotIdx: i, lineTotal: 35,
-      p0: Arc1_L_35[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L1_top' as const,
-      idx: i,
-      total: 15,
-    };
-  }),
+  ...L1_pts_35.slice(0, 15).map((p, i) => ({
+    lineNum: 1, lineDotIdx: i, lineTotal: 35,
+    p0: Arc1_L_35[i],
+    p1: p,
+    p2: L1_pts_50[2 * i],
+    color: BLACK_SQ,
+    type: 'L1_top' as const,
+    idx: i,
+    total: 15,
+  })),
   // 2. Top 15 dots from Line 2
-  ...L2_pts_35.slice(0, 15).map((p, i) => {
-    const m = 2 * i + 1;
-    const p3 = getDiagP3App(false, 1, m);
-    const p2 = L1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, false);
-    return {
-      lineNum: 2, lineDotIdx: i, lineTotal: 35,
-      p0: Arc2_L_35[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L2_cross' as const,
-      idx: i,
-      total: 15,
-    };
-  }),
+  ...L2_pts_35.slice(0, 15).map((p, i) => ({
+    lineNum: 2, lineDotIdx: i, lineTotal: 35,
+    p0: Arc2_L_35[i],
+    p1: p,
+    p2: L1_pts_50[2 * i + 1],
+    color: BLACK_SQ,
+    type: 'L2_cross' as const,
+    idx: i,
+    total: 15,
+  })),
   // 3. Bottom 20 dots from Line 1
-  ...L1_pts_35.slice(15).map((p, i) => {
-    const m = 30 + i;
-    const p3 = getDiagP3App(false, 1, m);
-    const p2 = L1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, false);
-    return {
-      lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
-      p0: Arc1_L_35[15 + i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L1_bot' as const,
-      idx: i,
-      total: 20,
-    };
-  }),
+  ...L1_pts_35.slice(15).map((p, i) => ({
+    lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+    p0: Arc1_L_35[15 + i],
+    p1: p,
+    p2: L1_pts_50[30 + i],
+    color: BLACK_SQ,
+    type: 'L1_bot' as const,
+    idx: i,
+    total: 20,
+  })),
   // 4. 30 purple dots from Line 3
-  ...L3_pts_30.map((p, i) => {
-    const m = i;
-    const p3 = getDiagP3App(false, 2, m);
-    const p2 = L2_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, false);
-    return {
-      lineNum: 3, lineDotIdx: i, lineTotal: 30,
-      p0: Arc3_L_30[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: PURPLE,
-      type: 'L3_march' as const,
-      idx: i,
-      total: 30,
-    };
-  }),
+  ...L3_pts_30.map((p, i) => ({
+    lineNum: 3, lineDotIdx: i, lineTotal: 30,
+    p0: Arc3_L_30[i],
+    p1: p,
+    p2: L2_pts_50[i],
+    color: PURPLE,
+    type: 'L3_march' as const,
+    idx: i,
+    total: 30,
+  })),
   // 5. Bottom 20 black dots from Line 2
-  ...L2_pts_35.slice(15).map((p, i) => {
-    const m = 30 + i;
-    const p3 = getDiagP3App(false, 2, m);
-    const p2 = L2_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, false);
-    return {
-      lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
-      p0: Arc2_L_35[15 + i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L2_bot' as const,
-      idx: i,
-      total: 20,
-    };
-  }),
+  ...L2_pts_35.slice(15).map((p, i) => ({
+    lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+    p0: Arc2_L_35[15 + i],
+    p1: p,
+    p2: L2_pts_50[30 + i],
+    color: BLACK_SQ,
+    type: 'L2_bot' as const,
+    idx: i,
+    total: 20,
+  })),
 ];
 
 const dotsRight: AnimatedDot[] = [
   // 1. Top 15 dots from Line 1
-  ...R1_pts_35.slice(0, 15).map((p, i) => {
-    const m = 2 * i;
-    const p3 = getDiagP3App(true, 1, m);
-    const p2 = R1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, true);
-    return {
-      lineNum: 1, lineDotIdx: i, lineTotal: 35,
-      p0: Arc1_R_35[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L1_top' as const,
-      idx: i,
-      total: 15,
-    };
-  }),
+  ...R1_pts_35.slice(0, 15).map((p, i) => ({
+    lineNum: 1, lineDotIdx: i, lineTotal: 35,
+    p0: Arc1_R_35[i],
+    p1: p,
+    p2: R1_pts_50[2 * i],
+    color: BLACK_SQ,
+    type: 'L1_top' as const,
+    idx: i,
+    total: 15,
+  })),
   // 2. Top 15 dots from Line 2
-  ...R2_pts_35.slice(0, 15).map((p, i) => {
-    const m = 2 * i + 1;
-    const p3 = getDiagP3App(true, 1, m);
-    const p2 = R1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, true);
-    return {
-      lineNum: 2, lineDotIdx: i, lineTotal: 35,
-      p0: Arc2_R_35[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L2_cross' as const,
-      idx: i,
-      total: 15,
-    };
-  }),
+  ...R2_pts_35.slice(0, 15).map((p, i) => ({
+    lineNum: 2, lineDotIdx: i, lineTotal: 35,
+    p0: Arc2_R_35[i],
+    p1: p,
+    p2: R1_pts_50[2 * i + 1],
+    color: BLACK_SQ,
+    type: 'L2_cross' as const,
+    idx: i,
+    total: 15,
+  })),
   // 3. Bottom 20 dots from Line 1
-  ...R1_pts_35.slice(15).map((p, i) => {
-    const m = 30 + i;
-    const p3 = getDiagP3App(true, 1, m);
-    const p2 = R1_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, true);
-    return {
-      lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
-      p0: Arc1_R_35[15 + i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L1_bot' as const,
-      idx: i,
-      total: 20,
-    };
-  }),
+  ...R1_pts_35.slice(15).map((p, i) => ({
+    lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+    p0: Arc1_R_35[15 + i],
+    p1: p,
+    p2: R1_pts_50[30 + i],
+    color: BLACK_SQ,
+    type: 'L1_bot' as const,
+    idx: i,
+    total: 20,
+  })),
   // 4. 30 purple dots from Line 3
-  ...R3_pts_30.map((p, i) => {
-    const m = i;
-    const p3 = getDiagP3App(true, 2, m);
-    const p2 = R2_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, true);
-    return {
-      lineNum: 3, lineDotIdx: i, lineTotal: 30,
-      p0: Arc3_R_30[i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: PURPLE,
-      type: 'L3_march' as const,
-      idx: i,
-      total: 30,
-    };
-  }),
+  ...R3_pts_30.map((p, i) => ({
+    lineNum: 3, lineDotIdx: i, lineTotal: 30,
+    p0: Arc3_R_30[i],
+    p1: p,
+    p2: R2_pts_50[i],
+    color: PURPLE,
+    type: 'L3_march' as const,
+    idx: i,
+    total: 30,
+  })),
   // 5. Bottom 20 black dots from Line 2
-  ...R2_pts_35.slice(15).map((p, i) => {
-    const m = 30 + i;
-    const p3 = getDiagP3App(true, 2, m);
-    const p2 = R2_pts_50[m];
-    const tr = makeDiagTrackApp(p2, p3, p3.isClosing, p3.isOuterClosing, true);
-    return {
-      lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
-      p0: Arc2_R_35[15 + i],
-      p1: p,
-      p2,
-      p3,
-      trackPts: tr.pts,
-      trackDists: tr.dists,
-      totalLen: tr.totalLen,
-      color: BLACK_SQ,
-      type: 'L2_bot' as const,
-      idx: i,
-      total: 20,
-    };
-  }),
+  ...R2_pts_35.slice(15).map((p, i) => ({
+    lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+    p0: Arc2_R_35[15 + i],
+    p1: p,
+    p2: R2_pts_50[30 + i],
+    color: BLACK_SQ,
+    type: 'L2_bot' as const,
+    idx: i,
+    total: 20,
+  })),
 ];
 
 function easeInOutCubic(t: number) {
@@ -2432,24 +2245,8 @@ export default function App() {
             } else if (tSec < 165.0) {
               const u = (tSec - 134.0) / 31.0;
               p = calcPersonPosition(d, u, false);
-            } else if (tSec <= 170.0) {
-              p = d.p2;
-            } else if (tSec < 185.0) {
-              const u = (tSec - 170.0) / 15.0;
-              const s = easeInOutCubic(u);
-              if (d.trackPts && d.trackDists && d.totalLen && d.totalLen > 0) {
-                const curDist = d.totalLen * s;
-                p = getPointAtDist(d.trackPts, d.trackDists, curDist);
-              } else if (d.p3) {
-                p = {
-                  x: d.p2.x + (d.p3.x - d.p2.x) * s,
-                  y: d.p2.y + (d.p3.y - d.p2.y) * s,
-                };
-              } else {
-                p = d.p2;
-              }
             } else {
-              p = d.p3 || d.p2;
+              p = d.p2;
             }
             return (
               <circle
@@ -2485,24 +2282,8 @@ export default function App() {
             } else if (tSec < 165.0) {
               const u = (tSec - 134.0) / 31.0;
               p = calcPersonPosition(d, u, true);
-            } else if (tSec <= 170.0) {
-              p = d.p2;
-            } else if (tSec < 185.0) {
-              const u = (tSec - 170.0) / 15.0;
-              const s = easeInOutCubic(u);
-              if (d.trackPts && d.trackDists && d.totalLen && d.totalLen > 0) {
-                const curDist = d.totalLen * s;
-                p = getPointAtDist(d.trackPts, d.trackDists, curDist);
-              } else if (d.p3) {
-                p = {
-                  x: d.p2.x + (d.p3.x - d.p2.x) * s,
-                  y: d.p2.y + (d.p3.y - d.p2.y) * s,
-                };
-              } else {
-                p = d.p2;
-              }
             } else {
-              p = d.p3 || d.p2;
+              p = d.p2;
             }
             return (
               <circle
