@@ -4,8 +4,7 @@
   "description": "Interactive 2D Stadium Choreography Animation",
   "main": "index.html",
   "scripts": {
-    "start": "serve .",
-    "build": "echo 'Static build ready'"
+    "start": "serve ."
   },
   "keywords": [],
   "author": "",
