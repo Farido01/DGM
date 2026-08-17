@@ -1474,22 +1474,22 @@ const dotsLeft: AnimatedDot[] = [
       total: 15,
     };
   }),
-  // 2. Top 15 dots from Line 2 (Transition to top segment of Diagonal Line 1)
+  // 2. Top 15 dots from Line 2 (Transition to 1st Outer Circle ring)
   ...L2_pts_35.slice(0, 15).map((p, i) => {
-    const pt = getDiag1PointApp(i / 24);
+    const pCircL = getCircleHalfPt(10 * STEP, i, 25, false);
     return {
       lineNum: 2, lineDotIdx: i, lineTotal: 35,
       p0: Arc2_L_35[i],
       p1: p,
       p2: L1_pts_50[2 * i + 1],
-      pHeadphone: { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) },
+      pHeadphone: { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y },
       color: BLACK_SQ,
       type: 'L2_cross' as const,
       idx: i,
       total: 15,
     };
   }),
-  // 3. Bottom 20 dots from Line 1 (10 dots continue Diagonal 1, 10 dots close Headphone via hook track)
+  // 3. Bottom 20 dots from Line 1 (10 dots continue Outer Circle ring, 10 dots close Headphone via hook track)
   ...L1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1506,8 +1506,8 @@ const dotsLeft: AnimatedDot[] = [
       hookS1_L1 = s_top_L1 + (s_bot_L1 - s_top_L1) * (closeK / 9);
       pHeadphoneL1 = { x: gx(colL(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colL(10.5)), defaultY: gy(rowJ(closeR)) };
     } else {
-      const pt = getDiag1PointApp((15 + i) / 24);
-      pHeadphoneL1 = { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircL = getCircleHalfPt(10 * STEP, 15 + i, 25, false);
+      pHeadphoneL1 = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
     }
 
     return {
@@ -1526,15 +1526,15 @@ const dotsLeft: AnimatedDot[] = [
       total: 20,
     };
   }),
-  // 4. 30 purple dots from Line 3 (15 dots to Overhead Arch 2, 15 dots to top segment of Diagonal 2)
+  // 4. 30 purple dots from Line 3 (15 dots to Overhead Arch 2, 15 dots to Concentric Circle ring)
   ...L3_pts_30.map((p, i) => {
     let pHeadphoneL: PP;
     if (i < 15) {
       const pt = getArch2PointApp(i / 14);
       pHeadphoneL = { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) };
     } else {
-      const pt = getDiag2PointApp((i - 15) / 24);
-      pHeadphoneL = { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircL = getCircleHalfPt(10.6 * STEP, i - 15, 25, false);
+      pHeadphoneL = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
     }
     return {
       lineNum: 3, lineDotIdx: i, lineTotal: 30,
@@ -1548,7 +1548,7 @@ const dotsLeft: AnimatedDot[] = [
       total: 30,
     };
   }),
-  // 5. Bottom 20 black dots from Line 2 (10 dots continue Diagonal 2, 10 dots close Headphone via hook track)
+  // 5. Bottom 20 black dots from Line 2 (10 dots continue Concentric Circle ring, 10 dots close Headphone via hook track)
   ...L2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1565,8 +1565,8 @@ const dotsLeft: AnimatedDot[] = [
       hookS1_L2 = s_top_L2 + (s_bot_L2 - s_top_L2) * (closeK / 9);
       pHeadphoneL2 = { x: gx(colL(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colL(11.0)), defaultY: gy(rowJ(closeR)) };
     } else {
-      const pt = getDiag2PointApp((15 + i) / 24);
-      pHeadphoneL2 = { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircL = getCircleHalfPt(10.6 * STEP, 15 + i, 25, false);
+      pHeadphoneL2 = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
     }
 
     return {
@@ -1603,22 +1603,22 @@ const dotsRight: AnimatedDot[] = [
       total: 15,
     };
   }),
-  // 2. Top 15 dots from Line 2 (Transition to top segment of Diagonal Line 1)
+  // 2. Top 15 dots from Line 2 (Transition to 1st Outer Circle ring)
   ...R2_pts_35.slice(0, 15).map((p, i) => {
-    const pt = getDiag1PointApp(i / 24);
+    const pCircR = getCircleHalfPt(10 * STEP, i, 25, true);
     return {
       lineNum: 2, lineDotIdx: i, lineTotal: 35,
       p0: Arc2_R_35[i],
       p1: p,
       p2: R1_pts_50[2 * i + 1],
-      pHeadphone: { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) },
+      pHeadphone: { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y },
       color: BLACK_SQ,
       type: 'L2_cross' as const,
       idx: i,
       total: 15,
     };
   }),
-  // 3. Bottom 20 dots from Line 1 (10 dots continue Diagonal 1, 10 dots close Headphone via hook track)
+  // 3. Bottom 20 dots from Line 1 (10 dots continue Outer Circle ring, 10 dots close Headphone via hook track)
   ...R1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1635,8 +1635,8 @@ const dotsRight: AnimatedDot[] = [
       hookS1_R1 = s_top_R1 + (s_bot_R1 - s_top_R1) * (closeK / 9);
       pHeadphoneR1 = { x: gx(colR(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colR(10.5)), defaultY: gy(rowJ(closeR)) };
     } else {
-      const pt = getDiag1PointApp((15 + i) / 24);
-      pHeadphoneR1 = { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircR = getCircleHalfPt(10 * STEP, 15 + i, 25, true);
+      pHeadphoneR1 = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
     }
 
     return {
@@ -1655,15 +1655,15 @@ const dotsRight: AnimatedDot[] = [
       total: 20,
     };
   }),
-  // 4. 30 purple dots from Line 3 (15 dots to Overhead Arch 2, 15 dots to top segment of Diagonal 2)
+  // 4. 30 purple dots from Line 3 (15 dots to Overhead Arch 2, 15 dots to Concentric Circle ring)
   ...R3_pts_30.map((p, i) => {
     let pHeadphoneR: PP;
     if (i < 15) {
       const pt = getArch2PointApp(i / 14);
       pHeadphoneR = { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) };
     } else {
-      const pt = getDiag2PointApp((i - 15) / 24);
-      pHeadphoneR = { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircR = getCircleHalfPt(10.6 * STEP, i - 15, 25, true);
+      pHeadphoneR = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
     }
     return {
       lineNum: 3, lineDotIdx: i, lineTotal: 30,
@@ -1677,7 +1677,7 @@ const dotsRight: AnimatedDot[] = [
       total: 30,
     };
   }),
-  // 5. Bottom 20 black dots from Line 2 (10 dots continue Diagonal 2, 10 dots close Headphone via hook track)
+  // 5. Bottom 20 black dots from Line 2 (10 dots continue Concentric Circle ring, 10 dots close Headphone via hook track)
   ...R2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1694,8 +1694,8 @@ const dotsRight: AnimatedDot[] = [
       hookS1_R2 = s_top_R2 + (s_bot_R2 - s_top_R2) * (closeK / 9);
       pHeadphoneR2 = { x: gx(colR(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colR(11.0)), defaultY: gy(rowJ(closeR)) };
     } else {
-      const pt = getDiag2PointApp((15 + i) / 24);
-      pHeadphoneR2 = { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) };
+      const pCircR = getCircleHalfPt(10.6 * STEP, 15 + i, 25, true);
+      pHeadphoneR2 = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
     }
 
     return {
