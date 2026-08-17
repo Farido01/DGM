@@ -1864,13 +1864,13 @@ y: gy(rowJ(rowEnd)),
       }
     }
 
-    function buildHookTrack(isRight, isLine2) {
+    function buildFullConveyorTrack(isRight, isLine2) {
       const colFn = isRight ? colR : colL;
       const colTarget = isLine2 ? 11.0 : 10.5;
-      const diagStartCol = isLine2 ? 16.0 : 15.0;
-      const diagStartRow = isLine2 ? 14.0 : 13.5;
-      const diagMidCol = isLine2 ? 14.0 : 13.0;
-      const diagMidRow = isLine2 ? 16.2 : 15.7;
+      const diagStartCol = isLine2 ? 26.0 : 25.0;
+      const diagStartRow = isLine2 ? 3.5 : 3.0;
+      const diagMidCol = isLine2 ? 19.0 : 18.0;
+      const diagMidRow = isLine2 ? 11.0 : 10.5;
       const diagTopCol = isLine2 ? 12.0 : 11.0;
       const diagTopRow = isLine2 ? 18.5 : 18.0;
       const hookPeakCol = isLine2 ? 11.2 : 10.3;
@@ -1891,7 +1891,7 @@ y: gy(rowJ(rowEnd)),
       const dists = [0];
       let totalD = 0;
       const numSegs = cp.length - 1;
-      const samplesPerSeg = 50;
+      const samplesPerSeg = 60;
 
       for (let s = 0; s < numSegs; s++) {
         const p0 = cp[Math.max(0, s - 1)];
@@ -1927,58 +1927,48 @@ y: gy(rowJ(rowEnd)),
       return bestDist;
     }
 
-    const hookTrackL1 = buildHookTrack(false, false);
-    const hookTrackL2 = buildHookTrack(false, true);
-    const hookTrackR1 = buildHookTrack(true, false);
-    const hookTrackR2 = buildHookTrack(true, true);
+    const hookTrackL1 = buildFullConveyorTrack(false, false);
+    const hookTrackL2 = buildFullConveyorTrack(false, true);
+    const hookTrackR1 = buildFullConveyorTrack(true, false);
+    const hookTrackR2 = buildFullConveyorTrack(true, true);
 
-    function getArch1Point(t) {
-      const v = 1 - t;
-      const pStart = { c: 10.5, r: 18.0 };
-      const pEnd = { c: 14.5, r: 7.5 };
-      const cp1 = { c: 12.0, r: 17.5 };
-      const cp2 = { c: 13.8, r: 14.0 };
-      const c = v*v*v*pStart.c + 3*v*v*t*cp1.c + 3*v*t*t*cp2.c + t*t*t*pEnd.c;
-      const r = v*v*v*pStart.r + 3*v*v*t*cp1.r + 3*v*t*t*cp2.r + t*t*t*pEnd.r;
-      return { c, r };
-    }
+    const s_row7_L1 = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, { x: gx(colL(10.5)), y: gy(rowJ(7.0)) });
+    const s_row2_L1 = hookTrackL1.totalD;
+    const deltaS_L1 = (s_row2_L1 - s_row7_L1) / 9;
 
-    function getArch2Point(t) {
-      const v = 1 - t;
-      const pStart = { c: 11.2, r: 18.8 };
-      const pEnd = { c: 15.2, r: 8.5 };
-      const cp1 = { c: 12.8, r: 18.0 };
-      const cp2 = { c: 14.5, r: 14.5 };
-      const c = v*v*v*pStart.c + 3*v*v*t*cp1.c + 3*v*t*t*cp2.c + t*t*t*pEnd.c;
-      const r = v*v*v*pStart.r + 3*v*v*t*cp1.r + 3*v*t*t*cp2.r + t*t*t*pEnd.r;
-      return { c, r };
-    }
+    const s_row7_R1 = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, { x: gx(colR(10.5)), y: gy(rowJ(7.0)) });
+    const s_row2_R1 = hookTrackR1.totalD;
+    const deltaS_R1 = (s_row2_R1 - s_row7_R1) / 9;
 
-    function getDiag1Point(t) {
-      const c = 15.5 + (25.0 - 15.5) * t;
-      const r = 15.5 - (15.5 - 3.0) * t;
-      return { c, r };
-    }
+    const s_row7_L2 = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, { x: gx(colL(11.0)), y: gy(rowJ(7.0)) });
+    const s_row2_L2 = hookTrackL2.totalD;
+    const deltaS_L2 = (s_row2_L2 - s_row7_L2) / 9;
 
-    function getDiag2Point(t) {
-      const c = 16.5 + (26.0 - 16.5) * t;
-      const r = 15.0 - (15.0 - 3.5) * t;
-      return { c, r };
-    }
+    const s_row7_R2 = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, { x: gx(colR(11.0)), y: gy(rowJ(7.0)) });
+    const s_row2_R2 = hookTrackR2.totalD;
+    const deltaS_R2 = (s_row2_R2 - s_row7_R2) / 9;
 
     // Build 100 dot descriptors for left and right side
     const dotsLeft = [];
     const dotsRight = [];
 
-    // 1. Top 15 dots from Line 1 (Transition to Overhead Arch 1)
+    // 1. Top 15 dots from Line 1 (diagIdx = 2 * i)
     for (let i = 0; i < 15; i++) {
-      const pt = getArch1Point(i / 14);
+      const diagIdx = 2 * i;
+      const s0_L = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[diagIdx]);
+      const s1_L = s_row2_L1 - (49 - diagIdx) * deltaS_L1;
+      const s0_R = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[diagIdx]);
+      const s1_R = s_row2_R1 - (49 - diagIdx) * deltaS_R1;
+
       dotsLeft.push({
         lineNum: 1, lineDotIdx: i, lineTotal: 35,
         p0: Arc1_L_35[i],
         p1: L1_pts_35[i],
-        p2: L1_pts_50[2 * i],
-        pHeadphone: { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) },
+        p2: L1_pts_50[diagIdx],
+        hookTrackPts: hookTrackL1.pts,
+        hookTrackDists: hookTrackL1.dists,
+        hookS0: s0_L,
+        hookS1: s1_L,
         color: BLACK_SQ,
         type: 'L1_top',
         idx: i,
@@ -1988,8 +1978,11 @@ y: gy(rowJ(rowEnd)),
         lineNum: 1, lineDotIdx: i, lineTotal: 35,
         p0: Arc1_R_35[i],
         p1: R1_pts_35[i],
-        p2: R1_pts_50[2 * i],
-        pHeadphone: { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) },
+        p2: R1_pts_50[diagIdx],
+        hookTrackPts: hookTrackR1.pts,
+        hookTrackDists: hookTrackR1.dists,
+        hookS0: s0_R,
+        hookS1: s1_R,
         color: BLACK_SQ,
         type: 'L1_top',
         idx: i,
@@ -1997,16 +1990,23 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 2. Top 15 dots from Line 2 (Transition to 1st Outer Circle ring)
+    // 2. Top 15 dots from Line 2 (diagIdx = 2 * i + 1 on Line 1)
     for (let i = 0; i < 15; i++) {
-      const pCircL = getCircleHalfPt(10 * STEP, i, 25, false);
-      const pCircR = getCircleHalfPt(10 * STEP, i, 25, true);
+      const diagIdx = 2 * i + 1;
+      const s0_L = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[diagIdx]);
+      const s1_L = s_row2_L1 - (49 - diagIdx) * deltaS_L1;
+      const s0_R = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[diagIdx]);
+      const s1_R = s_row2_R1 - (49 - diagIdx) * deltaS_R1;
+
       dotsLeft.push({
         lineNum: 2, lineDotIdx: i, lineTotal: 35,
         p0: Arc2_L_35[i],
         p1: L2_pts_35[i],
-        p2: L1_pts_50[2 * i + 1],
-        pHeadphone: { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y },
+        p2: L1_pts_50[diagIdx],
+        hookTrackPts: hookTrackL1.pts,
+        hookTrackDists: hookTrackL1.dists,
+        hookS0: s0_L,
+        hookS1: s1_L,
         color: BLACK_SQ,
         type: 'L2_cross',
         idx: i,
@@ -2016,8 +2016,11 @@ y: gy(rowJ(rowEnd)),
         lineNum: 2, lineDotIdx: i, lineTotal: 35,
         p0: Arc2_R_35[i],
         p1: R2_pts_35[i],
-        p2: R1_pts_50[2 * i + 1],
-        pHeadphone: { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y },
+        p2: R1_pts_50[diagIdx],
+        hookTrackPts: hookTrackR1.pts,
+        hookTrackDists: hookTrackR1.dists,
+        hookS0: s0_R,
+        hookS1: s1_R,
         color: BLACK_SQ,
         type: 'L2_cross',
         idx: i,
@@ -2025,50 +2028,23 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 3. Bottom 20 dots from Line 1 (10 dots continue Outer Circle ring, 10 dots close Headphone via hook track)
+    // 3. Bottom 20 dots from Line 1 (diagIdx = 30 + i)
     for (let i = 0; i < 20; i++) {
-      const isClosing1 = (i >= 10);
-      const closeK = i - 10; // 0..9 (i=19 is leader at top of diagonal going to row 2)
-      const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
-
-      let hookTrackL1_pts = null, hookTrackL1_dists = null, hookS0_L1 = 0, hookS1_L1 = 0;
-      let hookTrackR1_pts = null, hookTrackR1_dists = null, hookS0_R1 = 0, hookS1_R1 = 0;
-      let pHeadphoneL1, pHeadphoneR1;
-
-      if (isClosing1) {
-        hookTrackL1_pts = hookTrackL1.pts;
-        hookTrackL1_dists = hookTrackL1.dists;
-        hookS0_L1 = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[30 + i]);
-        const s_top_L1 = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, { x: gx(colL(10.5)), y: gy(rowJ(7.0)) });
-        const s_bot_L1 = hookTrackL1.totalD;
-        hookS1_L1 = s_top_L1 + (s_bot_L1 - s_top_L1) * (closeK / 9);
-
-        hookTrackR1_pts = hookTrackR1.pts;
-        hookTrackR1_dists = hookTrackR1.dists;
-        hookS0_R1 = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[30 + i]);
-        const s_top_R1 = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, { x: gx(colR(10.5)), y: gy(rowJ(7.0)) });
-        const s_bot_R1 = hookTrackR1.totalD;
-        hookS1_R1 = s_top_R1 + (s_bot_R1 - s_top_R1) * (closeK / 9);
-
-        pHeadphoneL1 = { x: gx(colL(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colL(10.5)), defaultY: gy(rowJ(closeR)) };
-        pHeadphoneR1 = { x: gx(colR(10.5)), y: gy(rowJ(closeR)), defaultX: gx(colR(10.5)), defaultY: gy(rowJ(closeR)) };
-      } else {
-        const pCircL = getCircleHalfPt(10 * STEP, 15 + i, 25, false);
-        const pCircR = getCircleHalfPt(10 * STEP, 15 + i, 25, true);
-        pHeadphoneL1 = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
-        pHeadphoneR1 = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
-      }
+      const diagIdx = 30 + i;
+      const s0_L = findNearestDist(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[diagIdx]);
+      const s1_L = s_row2_L1 - (49 - diagIdx) * deltaS_L1;
+      const s0_R = findNearestDist(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[diagIdx]);
+      const s1_R = s_row2_R1 - (49 - diagIdx) * deltaS_R1;
 
       dotsLeft.push({
         lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc1_L_35[15 + i],
         p1: L1_pts_35[15 + i],
-        p2: L1_pts_50[30 + i],
-        pHeadphone: pHeadphoneL1,
-        hookTrackPts: hookTrackL1_pts,
-        hookTrackDists: hookTrackL1_dists,
-        hookS0: hookS0_L1,
-        hookS1: hookS1_L1,
+        p2: L1_pts_50[diagIdx],
+        hookTrackPts: hookTrackL1.pts,
+        hookTrackDists: hookTrackL1.dists,
+        hookS0: s0_L,
+        hookS1: s1_L,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -2078,12 +2054,11 @@ y: gy(rowJ(rowEnd)),
         lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc1_R_35[15 + i],
         p1: R1_pts_35[15 + i],
-        p2: R1_pts_50[30 + i],
-        pHeadphone: pHeadphoneR1,
-        hookTrackPts: hookTrackR1_pts,
-        hookTrackDists: hookTrackR1_dists,
-        hookS0: hookS0_R1,
-        hookS1: hookS1_R1,
+        p2: R1_pts_50[diagIdx],
+        hookTrackPts: hookTrackR1.pts,
+        hookTrackDists: hookTrackR1.dists,
+        hookS0: s0_R,
+        hookS1: s1_R,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -2091,26 +2066,23 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 4. 30 purple dots from Line 3 (15 dots to Overhead Arch 2, 15 dots to Concentric Circle ring)
+    // 4. 30 purple dots from Line 3 (diagIdx = i on Line 2)
     for (let i = 0; i < 30; i++) {
-      let pHeadphoneL, pHeadphoneR;
-      if (i < 15) {
-        const pt = getArch2Point(i / 14);
-        pHeadphoneL = { x: gx(colL(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colL(pt.c)), defaultY: gy(rowJ(pt.r)) };
-        pHeadphoneR = { x: gx(colR(pt.c)), y: gy(rowJ(pt.r)), defaultX: gx(colR(pt.c)), defaultY: gy(rowJ(pt.r)) };
-      } else {
-        const pCircL = getCircleHalfPt(10.6 * STEP, i - 15, 25, false);
-        const pCircR = getCircleHalfPt(10.6 * STEP, i - 15, 25, true);
-        pHeadphoneL = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
-        pHeadphoneR = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
-      }
+      const diagIdx = i;
+      const s0_L = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, L2_pts_50[diagIdx]);
+      const s1_L = s_row2_L2 - (49 - diagIdx) * deltaS_L2;
+      const s0_R = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, R2_pts_50[diagIdx]);
+      const s1_R = s_row2_R2 - (49 - diagIdx) * deltaS_R2;
 
       dotsLeft.push({
         lineNum: 3, lineDotIdx: i, lineTotal: 30,
         p0: Arc3_L_30[i],
         p1: L3_pts_30[i],
-        p2: L2_pts_50[i],
-        pHeadphone: pHeadphoneL,
+        p2: L2_pts_50[diagIdx],
+        hookTrackPts: hookTrackL2.pts,
+        hookTrackDists: hookTrackL2.dists,
+        hookS0: s0_L,
+        hookS1: s1_L,
         color: PURPLE,
         type: 'L3_march',
         idx: i,
@@ -2120,8 +2092,11 @@ y: gy(rowJ(rowEnd)),
         lineNum: 3, lineDotIdx: i, lineTotal: 30,
         p0: Arc3_R_30[i],
         p1: R3_pts_30[i],
-        p2: R2_pts_50[i],
-        pHeadphone: pHeadphoneR,
+        p2: R2_pts_50[diagIdx],
+        hookTrackPts: hookTrackR2.pts,
+        hookTrackDists: hookTrackR2.dists,
+        hookS0: s0_R,
+        hookS1: s1_R,
         color: PURPLE,
         type: 'L3_march',
         idx: i,
@@ -2129,50 +2104,23 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 5. Bottom 20 black dots from Line 2 (10 dots continue Concentric Circle ring, 10 dots close Headphone via hook track)
+    // 5. Bottom 20 black dots from Line 2 (diagIdx = 30 + i on Line 2)
     for (let i = 0; i < 20; i++) {
-      const isClosing2 = (i >= 10);
-      const closeK = i - 10; // 0..9
-      const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
-
-      let hookTrackL2_pts = null, hookTrackL2_dists = null, hookS0_L2 = 0, hookS1_L2 = 0;
-      let hookTrackR2_pts = null, hookTrackR2_dists = null, hookS0_R2 = 0, hookS1_R2 = 0;
-      let pHeadphoneL2, pHeadphoneR2;
-
-      if (isClosing2) {
-        hookTrackL2_pts = hookTrackL2.pts;
-        hookTrackL2_dists = hookTrackL2.dists;
-        hookS0_L2 = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, L2_pts_50[30 + i]);
-        const s_top_L2 = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, { x: gx(colL(11.0)), y: gy(rowJ(7.0)) });
-        const s_bot_L2 = hookTrackL2.totalD;
-        hookS1_L2 = s_top_L2 + (s_bot_L2 - s_top_L2) * (closeK / 9);
-
-        hookTrackR2_pts = hookTrackR2.pts;
-        hookTrackR2_dists = hookTrackR2.dists;
-        hookS0_R2 = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, R2_pts_50[30 + i]);
-        const s_top_R2 = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, { x: gx(colR(11.0)), y: gy(rowJ(7.0)) });
-        const s_bot_R2 = hookTrackR2.totalD;
-        hookS1_R2 = s_top_R2 + (s_bot_R2 - s_top_R2) * (closeK / 9);
-
-        pHeadphoneL2 = { x: gx(colL(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colL(11.0)), defaultY: gy(rowJ(closeR)) };
-        pHeadphoneR2 = { x: gx(colR(11.0)), y: gy(rowJ(closeR)), defaultX: gx(colR(11.0)), defaultY: gy(rowJ(closeR)) };
-      } else {
-        const pCircL = getCircleHalfPt(10.6 * STEP, 15 + i, 25, false);
-        const pCircR = getCircleHalfPt(10.6 * STEP, 15 + i, 25, true);
-        pHeadphoneL2 = { x: pCircL.x, y: pCircL.y, defaultX: pCircL.x, defaultY: pCircL.y };
-        pHeadphoneR2 = { x: pCircR.x, y: pCircR.y, defaultX: pCircR.x, defaultY: pCircR.y };
-      }
+      const diagIdx = 30 + i;
+      const s0_L = findNearestDist(hookTrackL2.pts, hookTrackL2.dists, L2_pts_50[diagIdx]);
+      const s1_L = s_row2_L2 - (49 - diagIdx) * deltaS_L2;
+      const s0_R = findNearestDist(hookTrackR2.pts, hookTrackR2.dists, R2_pts_50[diagIdx]);
+      const s1_R = s_row2_R2 - (49 - diagIdx) * deltaS_R2;
 
       dotsLeft.push({
         lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc2_L_35[15 + i],
         p1: L2_pts_35[15 + i],
-        p2: L2_pts_50[30 + i],
-        pHeadphone: pHeadphoneL2,
-        hookTrackPts: hookTrackL2_pts,
-        hookTrackDists: hookTrackL2_dists,
-        hookS0: hookS0_L2,
-        hookS1: hookS1_L2,
+        p2: L2_pts_50[diagIdx],
+        hookTrackPts: hookTrackL2.pts,
+        hookTrackDists: hookTrackL2.dists,
+        hookS0: s0_L,
+        hookS1: s1_L,
         color: BLACK_SQ,
         type: 'L2_bot',
         idx: i,
@@ -2182,12 +2130,11 @@ y: gy(rowJ(rowEnd)),
         lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc2_R_35[15 + i],
         p1: R2_pts_35[15 + i],
-        p2: R2_pts_50[30 + i],
-        pHeadphone: pHeadphoneR2,
-        hookTrackPts: hookTrackR2_pts,
-        hookTrackDists: hookTrackR2_dists,
-        hookS0: hookS0_R2,
-        hookS1: hookS1_R2,
+        p2: R2_pts_50[diagIdx],
+        hookTrackPts: hookTrackR2.pts,
+        hookTrackDists: hookTrackR2.dists,
+        hookS0: s0_R,
+        hookS1: s1_R,
         color: BLACK_SQ,
         type: 'L2_bot',
         idx: i,
@@ -2649,30 +2596,19 @@ y: gy(rowJ(rowEnd)),
           // 2:45..2:50 (5s): Стоят в 2-х диагональных линиях
           p = d.p2;
         } else if (tSec < 185.0) {
-          // 2:50..3:05 (15s): ВСЕ 100 участников синхронно переходят:
-          // - 10 участников закрывают открытую часть наушников по верхней петле
-          // - остальные участники синхронно занимают верхние купольные дуги и диагональные линии
+          // 2:50..3:05 (15s): 10 участников с конца диагоналей маршируют по верхней петле и опускаются вниз вдоль открытой части наушников
           if (d.hookTrackPts && d.hookTrackDists) {
             const u = (tSec - 170.0) / 15.0;
             const s = easeInOutCubic(u);
             const curDist = d.hookS0 + (d.hookS1 - d.hookS0) * s;
             p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
-          } else if (d.pHeadphone) {
-            const u = (tSec - 170.0) / 15.0;
-            const s = easeInOutCubic(u);
-            p = {
-              x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
-              y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
-            };
           } else {
             p = d.p2;
           }
         } else {
-          // 3:05+ : Зафиксированы в новой фигуре наушников
+          // 3:05+ : Фиксация в закрывающей вертикальной линии наушника (или в диагонали)
           if (d.hookTrackPts && d.hookTrackDists) {
             p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1);
-          } else if (d.pHeadphone) {
-            p = d.pHeadphone;
           } else {
             p = d.p2;
           }
@@ -2710,21 +2646,12 @@ y: gy(rowJ(rowEnd)),
             const s = easeInOutCubic(u);
             const curDist = d.hookS0 + (d.hookS1 - d.hookS0) * s;
             p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
-          } else if (d.pHeadphone) {
-            const u = (tSec - 170.0) / 15.0;
-            const s = easeInOutCubic(u);
-            p = {
-              x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
-              y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
-            };
           } else {
             p = d.p2;
           }
         } else {
           if (d.hookTrackPts && d.hookTrackDists) {
             p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1);
-          } else if (d.pHeadphone) {
-            p = d.pHeadphone;
           } else {
             p = d.p2;
           }
