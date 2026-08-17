@@ -1350,7 +1350,79 @@ type AnimatedDot = {
   idx: number;
   total: number;
   pHeadphone?: PP | null;
+  hookTrackPts?: PP[] | null;
+  hookTrackDists?: number[] | null;
+  hookS0?: number;
+  hookS1?: number;
 };
+
+function buildHookTrackApp(isRight: boolean, isLine2: boolean) {
+  const colFn = isRight ? colR : colL;
+  const colTarget = isLine2 ? 11.0 : 10.5;
+  const diagStartCol = isLine2 ? 16.0 : 15.0;
+  const diagStartRow = isLine2 ? 14.0 : 13.5;
+  const diagMidCol = isLine2 ? 14.0 : 13.0;
+  const diagMidRow = isLine2 ? 16.2 : 15.7;
+  const diagTopCol = isLine2 ? 12.0 : 11.0;
+  const diagTopRow = isLine2 ? 18.5 : 18.0;
+  const hookPeakCol = isLine2 ? 11.2 : 10.3;
+  const hookPeakRow = isLine2 ? 19.3 : 18.8;
+
+  const cp = [
+    { x: gx(colFn(diagStartCol)), y: gy(rowJ(diagStartRow)) },
+    { x: gx(colFn(diagMidCol)), y: gy(rowJ(diagMidRow)) },
+    { x: gx(colFn(diagTopCol)), y: gy(rowJ(diagTopRow)) },
+    { x: gx(colFn(hookPeakCol)), y: gy(rowJ(hookPeakRow)) },
+    { x: gx(colFn(colTarget)), y: gy(rowJ(17.0)) },
+    { x: gx(colFn(colTarget)), y: gy(rowJ(12.0)) },
+    { x: gx(colFn(colTarget)), y: gy(rowJ(7.0)) },
+    { x: gx(colFn(colTarget)), y: gy(rowJ(2.0)) },
+  ];
+
+  const pts: PP[] = [];
+  const dists: number[] = [0];
+  let totalD = 0;
+  const numSegs = cp.length - 1;
+  const samplesPerSeg = 50;
+
+  for (let s = 0; s < numSegs; s++) {
+    const p0 = cp[Math.max(0, s - 1)];
+    const p1 = cp[s];
+    const p2 = cp[s + 1];
+    const p3 = cp[Math.min(cp.length - 1, s + 2)];
+
+    for (let i = 0; i < samplesPerSeg; i++) {
+      const t = i / samplesPerSeg;
+      const t2 = t * t, t3 = t2 * t;
+      const x = 0.5 * ((2*p1.x) + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3);
+      const y = 0.5 * ((2*p1.y) + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3);
+      pts.push({ x, y });
+      if (pts.length > 1) {
+        totalD += Math.hypot(x - pts[pts.length - 2].x, y - pts[pts.length - 2].y);
+        dists.push(totalD);
+      }
+    }
+  }
+  return { pts, dists, totalD };
+}
+
+function findNearestDistApp(pts: PP[], dists: number[], pTarget: PP) {
+  let bestDist = 0;
+  let minDist = Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const d = Math.hypot(pts[i].x - pTarget.x, pts[i].y - pTarget.y);
+    if (d < minDist) {
+      minDist = d;
+      bestDist = dists[i];
+    }
+  }
+  return bestDist;
+}
+
+const hookTrackL1 = buildHookTrackApp(false, false);
+const hookTrackL2 = buildHookTrackApp(false, true);
+const hookTrackR1 = buildHookTrackApp(true, false);
+const hookTrackR2 = buildHookTrackApp(true, true);
 
 const dotsLeft: AnimatedDot[] = [
   // 1. Top 15 dots from Line 1
@@ -1375,11 +1447,22 @@ const dotsLeft: AnimatedDot[] = [
     idx: i,
     total: 15,
   })),
-  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition to close Headphone at col 10.5, row 7..2)
+  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition over top hook down col 10.5, row 7..2)
   ...L1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
     const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+
+    let hookTrackL1_pts = null, hookTrackL1_dists = null, hookS0_L1 = 0, hookS1_L1 = 0;
+    if (isClosing1) {
+      hookTrackL1_pts = hookTrackL1.pts;
+      hookTrackL1_dists = hookTrackL1.dists;
+      hookS0_L1 = findNearestDistApp(hookTrackL1.pts, hookTrackL1.dists, L1_pts_50[30 + i]);
+      const s_top_L1 = findNearestDistApp(hookTrackL1.pts, hookTrackL1.dists, { x: gx(colL(10.5)), y: gy(rowJ(7.0)) });
+      const s_bot_L1 = hookTrackL1.totalD;
+      hookS1_L1 = s_top_L1 + (s_bot_L1 - s_top_L1) * (closeK / 9);
+    }
+
     return {
       lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
       p0: Arc1_L_35[15 + i],
@@ -1391,6 +1474,10 @@ const dotsLeft: AnimatedDot[] = [
         defaultX: gx(colL(10.5)),
         defaultY: gy(rowJ(closeR)),
       } : null,
+      hookTrackPts: hookTrackL1_pts,
+      hookTrackDists: hookTrackL1_dists,
+      hookS0: hookS0_L1,
+      hookS1: hookS1_L1,
       color: BLACK_SQ,
       type: 'L1_bot' as const,
       idx: i,
@@ -1408,11 +1495,22 @@ const dotsLeft: AnimatedDot[] = [
     idx: i,
     total: 30,
   })),
-  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition to close Headphone at col 11.0, row 7..2)
+  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition over top hook down col 11.0, row 7..2)
   ...L2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
     const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+
+    let hookTrackL2_pts = null, hookTrackL2_dists = null, hookS0_L2 = 0, hookS1_L2 = 0;
+    if (isClosing2) {
+      hookTrackL2_pts = hookTrackL2.pts;
+      hookTrackL2_dists = hookTrackL2.dists;
+      hookS0_L2 = findNearestDistApp(hookTrackL2.pts, hookTrackL2.dists, L2_pts_50[30 + i]);
+      const s_top_L2 = findNearestDistApp(hookTrackL2.pts, hookTrackL2.dists, { x: gx(colL(11.0)), y: gy(rowJ(7.0)) });
+      const s_bot_L2 = hookTrackL2.totalD;
+      hookS1_L2 = s_top_L2 + (s_bot_L2 - s_top_L2) * (closeK / 9);
+    }
+
     return {
       lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
       p0: Arc2_L_35[15 + i],
@@ -1424,6 +1522,10 @@ const dotsLeft: AnimatedDot[] = [
         defaultX: gx(colL(11.0)),
         defaultY: gy(rowJ(closeR)),
       } : null,
+      hookTrackPts: hookTrackL2_pts,
+      hookTrackDists: hookTrackL2_dists,
+      hookS0: hookS0_L2,
+      hookS1: hookS1_L2,
       color: BLACK_SQ,
       type: 'L2_bot' as const,
       idx: i,
@@ -1455,11 +1557,22 @@ const dotsRight: AnimatedDot[] = [
     idx: i,
     total: 15,
   })),
-  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition to close Headphone at col 10.5, row 7..2)
+  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition over top hook down col 10.5, row 7..2)
   ...R1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
     const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+
+    let hookTrackR1_pts = null, hookTrackR1_dists = null, hookS0_R1 = 0, hookS1_R1 = 0;
+    if (isClosing1) {
+      hookTrackR1_pts = hookTrackR1.pts;
+      hookTrackR1_dists = hookTrackR1.dists;
+      hookS0_R1 = findNearestDistApp(hookTrackR1.pts, hookTrackR1.dists, R1_pts_50[30 + i]);
+      const s_top_R1 = findNearestDistApp(hookTrackR1.pts, hookTrackR1.dists, { x: gx(colR(10.5)), y: gy(rowJ(7.0)) });
+      const s_bot_R1 = hookTrackR1.totalD;
+      hookS1_R1 = s_top_R1 + (s_bot_R1 - s_top_R1) * (closeK / 9);
+    }
+
     return {
       lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
       p0: Arc1_R_35[15 + i],
@@ -1471,6 +1584,10 @@ const dotsRight: AnimatedDot[] = [
         defaultX: gx(colR(10.5)),
         defaultY: gy(rowJ(closeR)),
       } : null,
+      hookTrackPts: hookTrackR1_pts,
+      hookTrackDists: hookTrackR1_dists,
+      hookS0: hookS0_R1,
+      hookS1: hookS1_R1,
       color: BLACK_SQ,
       type: 'L1_bot' as const,
       idx: i,
@@ -1488,11 +1605,22 @@ const dotsRight: AnimatedDot[] = [
     idx: i,
     total: 30,
   })),
-  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition to close Headphone at col 11.0, row 7..2)
+  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition over top hook down col 11.0, row 7..2)
   ...R2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
     const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+
+    let hookTrackR2_pts = null, hookTrackR2_dists = null, hookS0_R2 = 0, hookS1_R2 = 0;
+    if (isClosing2) {
+      hookTrackR2_pts = hookTrackR2.pts;
+      hookTrackR2_dists = hookTrackR2.dists;
+      hookS0_R2 = findNearestDistApp(hookTrackR2.pts, hookTrackR2.dists, R2_pts_50[30 + i]);
+      const s_top_R2 = findNearestDistApp(hookTrackR2.pts, hookTrackR2.dists, { x: gx(colR(11.0)), y: gy(rowJ(7.0)) });
+      const s_bot_R2 = hookTrackR2.totalD;
+      hookS1_R2 = s_top_R2 + (s_bot_R2 - s_top_R2) * (closeK / 9);
+    }
+
     return {
       lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
       p0: Arc2_R_35[15 + i],
@@ -1504,6 +1632,10 @@ const dotsRight: AnimatedDot[] = [
         defaultX: gx(colR(11.0)),
         defaultY: gy(rowJ(closeR)),
       } : null,
+      hookTrackPts: hookTrackR2_pts,
+      hookTrackDists: hookTrackR2_dists,
+      hookS0: hookS0_R2,
+      hookS1: hookS1_R2,
       color: BLACK_SQ,
       type: 'L2_bot' as const,
       idx: i,
@@ -2314,18 +2446,20 @@ export default function App() {
             } else if (tSec <= 170.0) {
               p = d.p2;
             } else if (tSec < 185.0) {
-              if (d.pHeadphone) {
+              if (d.hookTrackPts && d.hookTrackDists) {
                 const u = (tSec - 170.0) / 15.0;
                 const s = easeInOutCubic(u);
-                p = {
-                  x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
-                  y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
-                };
+                const curDist = (d.hookS0 || 0) + ((d.hookS1 || 0) - (d.hookS0 || 0)) * s;
+                p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
               } else {
                 p = d.p2;
               }
             } else {
-              p = d.pHeadphone ? d.pHeadphone : d.p2;
+              if (d.hookTrackPts && d.hookTrackDists) {
+                p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1 || 0);
+              } else {
+                p = d.p2;
+              }
             }
             return (
               <circle
@@ -2364,18 +2498,20 @@ export default function App() {
             } else if (tSec <= 170.0) {
               p = d.p2;
             } else if (tSec < 185.0) {
-              if (d.pHeadphone) {
+              if (d.hookTrackPts && d.hookTrackDists) {
                 const u = (tSec - 170.0) / 15.0;
                 const s = easeInOutCubic(u);
-                p = {
-                  x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
-                  y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
-                };
+                const curDist = (d.hookS0 || 0) + ((d.hookS1 || 0) - (d.hookS0 || 0)) * s;
+                p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, curDist);
               } else {
                 p = d.p2;
               }
             } else {
-              p = d.pHeadphone ? d.pHeadphone : d.p2;
+              if (d.hookTrackPts && d.hookTrackDists) {
+                p = getPointAtDist(d.hookTrackPts, d.hookTrackDists, d.hookS1 || 0);
+              } else {
+                p = d.p2;
+              }
             }
             return (
               <circle
