@@ -1916,13 +1916,30 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 3. Bottom 20 dots from Line 1
+    // 3. Bottom 20 dots from Line 1 (Last 10 dots transition to close Headphone at col 10.5, row 7..2)
     for (let i = 0; i < 20; i++) {
+      const isClosing1 = (i >= 10);
+      const closeK = i - 10; // 0..9
+      const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+      const pHeadphoneL1 = isClosing1 ? {
+        x: gx(colL(10.5)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colL(10.5)),
+        defaultY: gy(rowJ(closeR)),
+      } : null;
+      const pHeadphoneR1 = isClosing1 ? {
+        x: gx(colR(10.5)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colR(10.5)),
+        defaultY: gy(rowJ(closeR)),
+      } : null;
+
       dotsLeft.push({
         lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc1_L_35[15 + i],
         p1: L1_pts_35[15 + i],
         p2: L1_pts_50[30 + i],
+        pHeadphone: pHeadphoneL1,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -1933,6 +1950,7 @@ y: gy(rowJ(rowEnd)),
         p0: Arc1_R_35[15 + i],
         p1: R1_pts_35[15 + i],
         p2: R1_pts_50[30 + i],
+        pHeadphone: pHeadphoneR1,
         color: BLACK_SQ,
         type: 'L1_bot',
         idx: i,
@@ -1964,13 +1982,30 @@ y: gy(rowJ(rowEnd)),
       });
     }
 
-    // 5. Bottom 20 black dots from Line 2
+    // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition to close Headphone at col 11.0, row 7..2)
     for (let i = 0; i < 20; i++) {
+      const isClosing2 = (i >= 10);
+      const closeK = i - 10; // 0..9
+      const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+      const pHeadphoneL2 = isClosing2 ? {
+        x: gx(colL(11.0)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colL(11.0)),
+        defaultY: gy(rowJ(closeR)),
+      } : null;
+      const pHeadphoneR2 = isClosing2 ? {
+        x: gx(colR(11.0)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colR(11.0)),
+        defaultY: gy(rowJ(closeR)),
+      } : null;
+
       dotsLeft.push({
         lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
         p0: Arc2_L_35[15 + i],
         p1: L2_pts_35[15 + i],
         p2: L2_pts_50[30 + i],
+        pHeadphone: pHeadphoneL2,
         color: BLACK_SQ,
         type: 'L2_bot',
         idx: i,
@@ -1981,6 +2016,7 @@ y: gy(rowJ(rowEnd)),
         p0: Arc2_R_35[15 + i],
         p1: R2_pts_35[15 + i],
         p2: R2_pts_50[30 + i],
+        pHeadphone: pHeadphoneR2,
         color: BLACK_SQ,
         type: 'L2_bot',
         idx: i,
@@ -2438,9 +2474,24 @@ y: gy(rowJ(rowEnd)),
           // 2:14..2:45 (31s): Переход из 3-х линий в 2 диагональные линии
           const u = (tSec - 134.0) / 31.0;
           p = calcPersonPosition(d, u, false);
-        } else {
-          // 2:45+ : Стоят в 2-х диагональных линиях
+        } else if (tSec <= 170.0) {
+          // 2:45..2:50 (5s): Стоят в 2-х диагональных линиях
           p = d.p2;
+        } else if (tSec < 185.0) {
+          // 2:50..3:05 (15s): 10 участников с конца диагоналей синхронно переходят и закрывают открытую часть наушников
+          if (d.pHeadphone) {
+            const u = (tSec - 170.0) / 15.0;
+            const s = easeInOutCubic(u);
+            p = {
+              x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
+              y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
+            };
+          } else {
+            p = d.p2;
+          }
+        } else {
+          // 3:05+ : Фиксация в закрывающей линии наушника (или в диагонали)
+          p = d.pHeadphone ? d.pHeadphone : d.p2;
         }
         currentPositions.diagLeft[i] = { x: p.x, y: p.y, dot: d };
         html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagLeft', ${i})" onclick="onDotClick(event, 'diagLeft', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;
@@ -2467,8 +2518,21 @@ y: gy(rowJ(rowEnd)),
         } else if (tSec < 165.0) {
           const u = (tSec - 134.0) / 31.0;
           p = calcPersonPosition(d, u, true);
-        } else {
+        } else if (tSec <= 170.0) {
           p = d.p2;
+        } else if (tSec < 185.0) {
+          if (d.pHeadphone) {
+            const u = (tSec - 170.0) / 15.0;
+            const s = easeInOutCubic(u);
+            p = {
+              x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
+              y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
+            };
+          } else {
+            p = d.p2;
+          }
+        } else {
+          p = d.pHeadphone ? d.pHeadphone : d.p2;
         }
         currentPositions.diagRight[i] = { x: p.x, y: p.y, dot: d };
         html += `<circle class="interactive-dot" onpointerdown="onDotPointerDown(event, 'diagRight', ${i})" onclick="onDotClick(event, 'diagRight', ${i})" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${R_LINE}" fill="${d.color}" stroke="transparent" stroke-width="10" />`;

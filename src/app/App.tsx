@@ -1349,6 +1349,7 @@ type AnimatedDot = {
   type: 'L1_top' | 'L2_cross' | 'L1_bot' | 'L3_march' | 'L2_bot';
   idx: number;
   total: number;
+  pHeadphone?: PP | null;
 };
 
 const dotsLeft: AnimatedDot[] = [
@@ -1374,17 +1375,28 @@ const dotsLeft: AnimatedDot[] = [
     idx: i,
     total: 15,
   })),
-  // 3. Bottom 20 dots from Line 1
-  ...L1_pts_35.slice(15).map((p, i) => ({
-    lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
-    p0: Arc1_L_35[15 + i],
-    p1: p,
-    p2: L1_pts_50[30 + i],
-    color: BLACK_SQ,
-    type: 'L1_bot' as const,
-    idx: i,
-    total: 20,
-  })),
+  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition to close Headphone at col 10.5, row 7..2)
+  ...L1_pts_35.slice(15).map((p, i) => {
+    const isClosing1 = (i >= 10);
+    const closeK = i - 10; // 0..9
+    const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+    return {
+      lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+      p0: Arc1_L_35[15 + i],
+      p1: p,
+      p2: L1_pts_50[30 + i],
+      pHeadphone: isClosing1 ? {
+        x: gx(colL(10.5)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colL(10.5)),
+        defaultY: gy(rowJ(closeR)),
+      } : null,
+      color: BLACK_SQ,
+      type: 'L1_bot' as const,
+      idx: i,
+      total: 20,
+    };
+  }),
   // 4. 30 purple dots from Line 3
   ...L3_pts_30.map((p, i) => ({
     lineNum: 3, lineDotIdx: i, lineTotal: 30,
@@ -1396,17 +1408,28 @@ const dotsLeft: AnimatedDot[] = [
     idx: i,
     total: 30,
   })),
-  // 5. Bottom 20 black dots from Line 2
-  ...L2_pts_35.slice(15).map((p, i) => ({
-    lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
-    p0: Arc2_L_35[15 + i],
-    p1: p,
-    p2: L2_pts_50[30 + i],
-    color: BLACK_SQ,
-    type: 'L2_bot' as const,
-    idx: i,
-    total: 20,
-  })),
+  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition to close Headphone at col 11.0, row 7..2)
+  ...L2_pts_35.slice(15).map((p, i) => {
+    const isClosing2 = (i >= 10);
+    const closeK = i - 10; // 0..9
+    const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+    return {
+      lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+      p0: Arc2_L_35[15 + i],
+      p1: p,
+      p2: L2_pts_50[30 + i],
+      pHeadphone: isClosing2 ? {
+        x: gx(colL(11.0)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colL(11.0)),
+        defaultY: gy(rowJ(closeR)),
+      } : null,
+      color: BLACK_SQ,
+      type: 'L2_bot' as const,
+      idx: i,
+      total: 20,
+    };
+  }),
 ];
 
 const dotsRight: AnimatedDot[] = [
@@ -1432,17 +1455,28 @@ const dotsRight: AnimatedDot[] = [
     idx: i,
     total: 15,
   })),
-  // 3. Bottom 20 dots from Line 1
-  ...R1_pts_35.slice(15).map((p, i) => ({
-    lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
-    p0: Arc1_R_35[15 + i],
-    p1: p,
-    p2: R1_pts_50[30 + i],
-    color: BLACK_SQ,
-    type: 'L1_bot' as const,
-    idx: i,
-    total: 20,
-  })),
+  // 3. Bottom 20 dots from Line 1 (Last 10 dots transition to close Headphone at col 10.5, row 7..2)
+  ...R1_pts_35.slice(15).map((p, i) => {
+    const isClosing1 = (i >= 10);
+    const closeK = i - 10; // 0..9
+    const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+    return {
+      lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
+      p0: Arc1_R_35[15 + i],
+      p1: p,
+      p2: R1_pts_50[30 + i],
+      pHeadphone: isClosing1 ? {
+        x: gx(colR(10.5)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colR(10.5)),
+        defaultY: gy(rowJ(closeR)),
+      } : null,
+      color: BLACK_SQ,
+      type: 'L1_bot' as const,
+      idx: i,
+      total: 20,
+    };
+  }),
   // 4. 30 purple dots from Line 3
   ...R3_pts_30.map((p, i) => ({
     lineNum: 3, lineDotIdx: i, lineTotal: 30,
@@ -1454,17 +1488,28 @@ const dotsRight: AnimatedDot[] = [
     idx: i,
     total: 30,
   })),
-  // 5. Bottom 20 black dots from Line 2
-  ...R2_pts_35.slice(15).map((p, i) => ({
-    lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
-    p0: Arc2_R_35[15 + i],
-    p1: p,
-    p2: R2_pts_50[30 + i],
-    color: BLACK_SQ,
-    type: 'L2_bot' as const,
-    idx: i,
-    total: 20,
-  })),
+  // 5. Bottom 20 black dots from Line 2 (Last 10 dots transition to close Headphone at col 11.0, row 7..2)
+  ...R2_pts_35.slice(15).map((p, i) => {
+    const isClosing2 = (i >= 10);
+    const closeK = i - 10; // 0..9
+    const closeR = 7.0 - (7.0 - 2.0) * (closeK / 9);
+    return {
+      lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
+      p0: Arc2_R_35[15 + i],
+      p1: p,
+      p2: R2_pts_50[30 + i],
+      pHeadphone: isClosing2 ? {
+        x: gx(colR(11.0)),
+        y: gy(rowJ(closeR)),
+        defaultX: gx(colR(11.0)),
+        defaultY: gy(rowJ(closeR)),
+      } : null,
+      color: BLACK_SQ,
+      type: 'L2_bot' as const,
+      idx: i,
+      total: 20,
+    };
+  }),
 ];
 
 function easeInOutCubic(t: number) {
@@ -2266,8 +2311,21 @@ export default function App() {
             } else if (tSec < 165.0) {
               const u = (tSec - 134.0) / 31.0;
               p = calcPersonPosition(d, u, false);
-            } else {
+            } else if (tSec <= 170.0) {
               p = d.p2;
+            } else if (tSec < 185.0) {
+              if (d.pHeadphone) {
+                const u = (tSec - 170.0) / 15.0;
+                const s = easeInOutCubic(u);
+                p = {
+                  x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
+                  y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
+                };
+              } else {
+                p = d.p2;
+              }
+            } else {
+              p = d.pHeadphone ? d.pHeadphone : d.p2;
             }
             return (
               <circle
@@ -2303,8 +2361,21 @@ export default function App() {
             } else if (tSec < 165.0) {
               const u = (tSec - 134.0) / 31.0;
               p = calcPersonPosition(d, u, true);
-            } else {
+            } else if (tSec <= 170.0) {
               p = d.p2;
+            } else if (tSec < 185.0) {
+              if (d.pHeadphone) {
+                const u = (tSec - 170.0) / 15.0;
+                const s = easeInOutCubic(u);
+                p = {
+                  x: d.p2.x + (d.pHeadphone.x - d.p2.x) * s,
+                  y: d.p2.y + (d.pHeadphone.y - d.p2.y) * s,
+                };
+              } else {
+                p = d.p2;
+              }
+            } else {
+              p = d.pHeadphone ? d.pHeadphone : d.p2;
             }
             return (
               <circle
