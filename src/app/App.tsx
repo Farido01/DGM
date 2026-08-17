@@ -1473,33 +1473,33 @@ const hbR1 = buildHeadbandArchApp(true, false);
 const hbR2 = buildHeadbandArchApp(true, true);
 
 const dotsLeft: AnimatedDot[] = [
-  // 1. Top 15 dots from Line 1 (Stay in straight diagonal streamer 0..14)
+  // 1. Top 15 dots from Line 1 (Outer Headband dots 0..14)
   ...L1_pts_35.slice(0, 15).map((p, i) => ({
     lineNum: 1, lineDotIdx: i, lineTotal: 35,
     p0: Arc1_L_35[i],
     p1: p,
     p2: L1_pts_50[2 * i],
-    p3: L1_pts_50[2 * i],
+    p3: getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * (i / 39)),
     color: BLACK_SQ,
     type: 'L1_top' as const,
     idx: i,
     total: 15,
   })),
-  // 2. Top 15 dots from Line 2 (Stay in straight diagonal streamer 15..29)
+  // 2. Top 15 dots from Line 2 (Outer Headband dots 15..29)
   ...L2_pts_35.slice(0, 15).map((p, i) => ({
     lineNum: 2, lineDotIdx: i, lineTotal: 35,
     p0: Arc2_L_35[i],
     p1: p,
     p2: L1_pts_50[2 * i + 1],
-    p3: L1_pts_50[2 * i + 1],
+    p3: getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((15 + i) / 39)),
     color: BLACK_SQ,
     type: 'L2_cross' as const,
     idx: i,
     total: 15,
   })),
   // 3. Bottom 20 dots from Line 1:
-  // First 10 form the Outer Headband Arch (Black) connecting circle (10:19) to headphone (14.5:7)
-  // Last 10 march over hook to close left headphone wall (col 10.5, row 7..2)
+  // First 10 (i=0..9) form Outer Headband dots 30..39 (connecting into headphone at 14.5:7)
+  // Last 10 (i=10..19) march over hook to close left headphone wall (col 10.5, row 7..2)
   ...L1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1515,7 +1515,7 @@ const dotsLeft: AnimatedDot[] = [
       hookS1_L1 = s_top_L1 + (s_bot_L1 - s_top_L1) * (closeK / 9);
     }
 
-    const pHeadbandL1 = !isClosing1 ? getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * (i / 9)) : null;
+    const pHeadbandL1 = !isClosing1 ? getPointAtDist(hbL1.pts, hbL1.dists, hbL1.totalD * ((30 + i) / 39)) : null;
 
     return {
       lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
@@ -1539,21 +1539,21 @@ const dotsLeft: AnimatedDot[] = [
       total: 20,
     };
   }),
-  // 4. 30 purple dots from Line 3 (Stay in straight diagonal streamer 0..29)
+  // 4. 30 purple dots from Line 3 (Inner Headband dots 0..29)
   ...L3_pts_30.map((p, i) => ({
     lineNum: 3, lineDotIdx: i, lineTotal: 30,
     p0: Arc3_L_30[i],
     p1: p,
     p2: L2_pts_50[i],
-    p3: L2_pts_50[i],
+    p3: getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * (i / 39)),
     color: PURPLE,
     type: 'L3_march' as const,
     idx: i,
     total: 30,
   })),
   // 5. Bottom 20 black dots from Line 2:
-  // First 10 form the Inner Headband Arch (Purple) connecting circle (10.7:18.3) to headphone (15:7)
-  // Last 10 march over hook to close left headphone inner wall (col 11.0, row 7..2)
+  // First 10 (i=0..9) form Inner Headband dots 30..39 (connecting into headphone at 15:7)
+  // Last 10 (i=10..19) march over hook to close left headphone inner wall (col 11.0, row 7..2)
   ...L2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1569,7 +1569,7 @@ const dotsLeft: AnimatedDot[] = [
       hookS1_L2 = s_top_L2 + (s_bot_L2 - s_top_L2) * (closeK / 9);
     }
 
-    const pHeadbandL2 = !isClosing2 ? getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * (i / 9)) : null;
+    const pHeadbandL2 = !isClosing2 ? getPointAtDist(hbL2.pts, hbL2.dists, hbL2.totalD * ((30 + i) / 39)) : null;
 
     return {
       lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
@@ -1596,33 +1596,33 @@ const dotsLeft: AnimatedDot[] = [
 ];
 
 const dotsRight: AnimatedDot[] = [
-  // 1. Top 15 dots from Line 1 (Stay in straight diagonal streamer 0..14)
+  // 1. Top 15 dots from Line 1 (Outer Headband dots 0..14)
   ...R1_pts_35.slice(0, 15).map((p, i) => ({
     lineNum: 1, lineDotIdx: i, lineTotal: 35,
     p0: Arc1_R_35[i],
     p1: p,
     p2: R1_pts_50[2 * i],
-    p3: R1_pts_50[2 * i],
+    p3: getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * (i / 39)),
     color: BLACK_SQ,
     type: 'L1_top' as const,
     idx: i,
     total: 15,
   })),
-  // 2. Top 15 dots from Line 2 (Stay in straight diagonal streamer 15..29)
+  // 2. Top 15 dots from Line 2 (Outer Headband dots 15..29)
   ...R2_pts_35.slice(0, 15).map((p, i) => ({
     lineNum: 2, lineDotIdx: i, lineTotal: 35,
     p0: Arc2_R_35[i],
     p1: p,
     p2: R1_pts_50[2 * i + 1],
-    p3: R1_pts_50[2 * i + 1],
+    p3: getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((15 + i) / 39)),
     color: BLACK_SQ,
     type: 'L2_cross' as const,
     idx: i,
     total: 15,
   })),
   // 3. Bottom 20 dots from Line 1:
-  // First 10 form the Outer Headband Arch (Black) connecting circle (10:19) to headphone (14.5:7)
-  // Last 10 march over hook to close left headphone wall (col 10.5, row 7..2)
+  // First 10 (i=0..9) form Outer Headband dots 30..39 (connecting into headphone at 14.5:7)
+  // Last 10 (i=10..19) march over hook to close left headphone wall (col 10.5, row 7..2)
   ...R1_pts_35.slice(15).map((p, i) => {
     const isClosing1 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1638,7 +1638,7 @@ const dotsRight: AnimatedDot[] = [
       hookS1_R1 = s_top_R1 + (s_bot_R1 - s_top_R1) * (closeK / 9);
     }
 
-    const pHeadbandR1 = !isClosing1 ? getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * (i / 9)) : null;
+    const pHeadbandR1 = !isClosing1 ? getPointAtDist(hbR1.pts, hbR1.dists, hbR1.totalD * ((30 + i) / 39)) : null;
 
     return {
       lineNum: 1, lineDotIdx: 15 + i, lineTotal: 35,
@@ -1662,21 +1662,21 @@ const dotsRight: AnimatedDot[] = [
       total: 20,
     };
   }),
-  // 4. 30 purple dots from Line 3 (Stay in straight diagonal streamer 0..29)
+  // 4. 30 purple dots from Line 3 (Inner Headband dots 0..29)
   ...R3_pts_30.map((p, i) => ({
     lineNum: 3, lineDotIdx: i, lineTotal: 30,
     p0: Arc3_R_30[i],
     p1: p,
     p2: R2_pts_50[i],
-    p3: R2_pts_50[i],
+    p3: getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * (i / 39)),
     color: PURPLE,
     type: 'L3_march' as const,
     idx: i,
     total: 30,
   })),
   // 5. Bottom 20 black dots from Line 2:
-  // First 10 form the Inner Headband Arch (Purple) connecting circle (10.7:18.3) to headphone (15:7)
-  // Last 10 march over hook to close left headphone inner wall (col 11.0, row 7..2)
+  // First 10 (i=0..9) form Inner Headband dots 30..39 (connecting into headphone at 15:7)
+  // Last 10 (i=10..19) march over hook to close left headphone inner wall (col 11.0, row 7..2)
   ...R2_pts_35.slice(15).map((p, i) => {
     const isClosing2 = (i >= 10);
     const closeK = i - 10; // 0..9
@@ -1692,7 +1692,7 @@ const dotsRight: AnimatedDot[] = [
       hookS1_R2 = s_top_R2 + (s_bot_R2 - s_top_R2) * (closeK / 9);
     }
 
-    const pHeadbandR2 = !isClosing2 ? getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * (i / 9)) : null;
+    const pHeadbandR2 = !isClosing2 ? getPointAtDist(hbR2.pts, hbR2.dists, hbR2.totalD * ((30 + i) / 39)) : null;
 
     return {
       lineNum: 2, lineDotIdx: 15 + i, lineTotal: 35,
